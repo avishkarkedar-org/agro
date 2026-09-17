@@ -1,0 +1,359 @@
+/* ============================================================
+   R88: DEEPER DARK, WARMER LIGHT, BOLDER HERO, TIDY FOOTER
+   (2026-07-24). Owner feedback after the Linear pass: make dark
+   genuinely darker, stop the light theme reading as flat white by
+   adding gentle colour, replace the plain hero with bolder
+   animated content, hide the redundant header Live pill, and tidy
+   the footer into a compact vertical list of professional icons.
+   Cosmetic only. Imported LAST (after redesign.css) so it wins.
+   ============================================================ */
+
+/* ---- Deeper, richer dark palette ---- */
+:root {
+  --bg: #030504;
+  --clay-bg: #030504;
+  --surface: #0a0d0b;
+  --surface-2: #0f1311;
+  --clay-surface: #0a0d0b;
+  --clay-surface-2: #0f1311;
+  --text: rgba(244, 248, 245, 0.95);
+  --t2: rgba(244, 248, 245, 0.62);
+  --t3: rgba(244, 248, 245, 0.40);
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.16);
+  --amber: #fbbf24;
+}
+body {
+  background:
+    radial-gradient(760px 440px at 88% -14%, rgba(52,211,153,0.10), transparent 60%),
+    radial-gradient(680px 420px at 6% 108%, rgba(234,179,8,0.05), transparent 60%),
+    var(--clay-bg) !important;
+}
+
+/* ---- Warmer, greener light palette (no more flat white) ---- */
+html.light {
+  --bg: #e7f1ea;
+  --clay-bg: #e7f1ea;
+  --surface: #ffffff;
+  --surface-2: #e3efe6;
+  --clay-surface: #ffffff;
+  --clay-surface-2: #e3efe6;
+  --text: rgba(11, 33, 22, 0.92);
+  --t2: rgba(11, 33, 22, 0.58);
+  --t3: rgba(11, 33, 22, 0.42);
+  --line: rgba(11, 60, 38, 0.1);
+  --line-strong: rgba(11, 60, 38, 0.18);
+  --amber: #b45309;
+}
+html.light body {
+  background:
+    radial-gradient(720px 440px at 88% -12%, rgba(18,137,74,0.16), transparent 58%),
+    radial-gradient(640px 420px at -6% 6%, rgba(56,189,124,0.13), transparent 55%),
+    radial-gradient(680px 520px at 50% 120%, rgba(234,179,8,0.10), transparent 60%),
+    var(--clay-bg) !important;
+}
+html.light .card {
+  background:
+    linear-gradient(168deg, rgba(18,137,74,0.06), rgba(18,137,74,0) 48%),
+    var(--clay-surface) !important;
+  border-color: rgba(11, 60, 38, 0.1) !important;
+}
+html.contrast body { background: #000 !important; }
+
+/* ---- Hide the redundant header Live/Offline pill (frees space) ---- */
+.header-right .badge-live { display: none !important; }
+.header-right { gap: 12px !important; }
+
+/* ---- Bolder, animated hero ---- */
+.home-hero {
+  position: relative !important;
+  overflow: hidden !important;
+  padding: 44px 38px 40px !important;
+  border-radius: 18px !important;
+  border: 1px solid var(--line) !important;
+  background:
+    linear-gradient(135deg, rgba(52,211,153,0.18), transparent 46%),
+    linear-gradient(300deg, rgba(234,179,8,0.10), transparent 42%),
+    linear-gradient(180deg, var(--clay-surface-2), var(--clay-surface)) !important;
+}
+html.light .home-hero {
+  background:
+    linear-gradient(135deg, rgba(18,137,74,0.16), transparent 46%),
+    linear-gradient(300deg, rgba(234,179,8,0.12), transparent 42%),
+    linear-gradient(180deg, #ffffff, #e3efe6) !important;
+}
+.home-hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(46px);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 0;
+}
+.home-hero-orb.o1 { width: 260px; height: 260px; top: -90px; right: -40px; background: radial-gradient(circle, rgba(52,211,153,0.7), transparent 70%); animation: hero-orb-a 9s ease-in-out infinite; }
+.home-hero-orb.o2 { width: 200px; height: 200px; bottom: -80px; right: 22%; background: radial-gradient(circle, rgba(234,179,8,0.5), transparent 70%); animation: hero-orb-b 11s ease-in-out infinite; }
+.home-hero-orb.o3 { width: 160px; height: 160px; top: 28%; left: -50px; background: radial-gradient(circle, rgba(56,189,248,0.35), transparent 70%); animation: hero-orb-a 13s ease-in-out infinite; }
+@keyframes hero-orb-a { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-18px, 22px); } }
+@keyframes hero-orb-b { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(20px, -18px); } }
+.home-hero-inner { position: relative; z-index: 2; max-width: 760px; }
+.home-hero-title {
+  font-size: clamp(30px, 5vw, 52px) !important;
+  letter-spacing: -0.03em !important;
+  line-height: 1.04 !important;
+  margin: 0 0 14px !important;
+}
+.home-hero-title span {
+  background: linear-gradient(120deg, var(--green), var(--amber)) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+.home-hero-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 26px;
+}
+.home-hero-action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--clay-surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.16s ease, transform 0.16s ease, background 0.16s ease;
+}
+.home-hero-action:hover {
+  border-color: var(--green);
+  transform: translateY(-3px);
+  background: var(--clay-surface-2);
+}
+.home-hero-action-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--green);
+  background: var(--gdim);
+  border: 1px solid var(--line);
+}
+@media (max-width: 640px) {
+  .home-hero { padding: 30px 20px 28px !important; }
+  .home-hero-actions { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ---- Compact vertical footer link list ---- */
+.ks-social {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 2px !important;
+  margin-bottom: 8px !important;
+  flex-wrap: nowrap !important;
+}
+.ks-social a { text-decoration: none; }
+.ks-social-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  color: var(--t2);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  transition: color 0.16s ease, background 0.16s ease;
+}
+.ks-social-row svg { color: var(--green); flex-shrink: 0; }
+.ks-social a:hover .ks-social-row { color: var(--text); background: var(--gdim); }
+
+/* ---- Sidebar polish ---- */
+.drawer-link.active { border-left: 2px solid var(--green) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .home-hero-orb { animation: none !important; }
+}
+
+/* ============================================================
+   R91 (2026-07-25): LEFT-ALIGNED FOOTER, TIGHTER RHYTHM,
+   WIDER CANVAS, REAL LIQUID GLASS IN BOTH THEMES.
+
+   Owner feedback: footer links were centred and floating in dead
+   space; the whole app had large empty gutters on both sides; and
+   the "liquid glass" look was missing entirely -- R74 claymorphism
+   had set backdrop-filter:none on every glassy surface, so nothing
+   was actually translucent any more.
+   ============================================================ */
+
+/* ---- 1. Reclaim the side gutters ----
+   .main and .header-inner were both capped at 1500px, which left wide
+   empty margins on 1440p+ displays. Widen the cap and add columns so
+   the extra width is filled with content rather than more whitespace. */
+.main,
+.header-inner {
+  max-width: 1800px !important;
+}
+@media (min-width: 1400px) {
+  .main { padding-left: 40px !important; padding-right: 40px !important; }
+  .header-inner { padding-left: 40px !important; padding-right: 40px !important; }
+}
+@media (min-width: 1600px) {
+  .grid { columns: 4 !important; }
+}
+@media (min-width: 2200px) {
+  .grid { columns: 5 !important; }
+}
+
+/* ---- 2. Footer: left-aligned and tight ----
+   Centring a list of short links reads as a personal page, not a
+   product. Flush-left with a consistent baseline is the professional
+   pattern, and it removes the ragged gaps either side of each row. */
+.ks-footer {
+  margin-top: 26px !important;
+  padding: 20px 22px 14px !important;
+  border-radius: 16px !important;
+}
+.ks-footer-grid {
+  text-align: left !important;
+  gap: 20px !important;
+}
+.ks-footer-title {
+  font-size: 11px !important;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--t3) !important;
+  margin-bottom: 8px !important;
+}
+.ks-footer-links a {
+  margin: 4px 0 !important;
+  font-size: 12px;
+  color: var(--t2);
+}
+.ks-footer-links a:hover { color: var(--green); text-decoration: none !important; }
+.ks-footer-bottom {
+  text-align: left !important;
+  margin-top: 14px !important;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 11px;
+}
+
+/* Social rows: flush left, no pill padding, no dead gaps */
+.ks-social {
+  align-items: flex-start !important;
+  gap: 0 !important;
+  margin-bottom: 0 !important;
+}
+.ks-social-row {
+  padding: 3px 0 !important;
+  gap: 8px !important;
+  font-size: 11px !important;
+  border-radius: 0 !important;
+}
+.ks-social a:hover .ks-social-row {
+  background: transparent !important;
+  color: var(--green) !important;
+}
+
+/* ---- 3. Liquid glass, restored ----
+   Desktop only on purpose: the R72/R74 passes stripped backdrop-filter
+   because blur on many surfaces is the main cause of Android scroll
+   jank. That trade-off still holds, so mobile keeps opaque clay and
+   only pointer devices get glass. html.contrast opts out entirely --
+   translucency destroys the contrast ratio it exists to guarantee. */
+@media (hover: hover) and (min-width: 769px) {
+  :root {
+    --glass-fx: blur(22px) saturate(170%);
+    --glass-tint-a: rgba(18, 28, 22, 0.62);
+    --glass-tint-b: rgba(10, 18, 14, 0.48);
+    --glass-edge: rgba(255, 255, 255, 0.10);
+    --glass-hl: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    --glass-cast: 0 18px 44px rgba(0, 0, 0, 0.40);
+  }
+  html.light {
+    --glass-tint-a: rgba(255, 255, 255, 0.66);
+    --glass-tint-b: rgba(240, 248, 243, 0.50);
+    --glass-edge: rgba(255, 255, 255, 0.80);
+    --glass-hl: inset 0 1px 0 rgba(255, 255, 255, 0.90);
+    --glass-cast: 0 14px 36px rgba(11, 60, 38, 0.12);
+  }
+
+  .card,
+  .post-card,
+  .res-card,
+  .fert-box,
+  .day-detail,
+  .detail-box,
+  .lang-menu,
+  .toast,
+  .modal-content,
+  .home-hero {
+    background: linear-gradient(160deg, var(--glass-tint-a), var(--glass-tint-b)) !important;
+    backdrop-filter: var(--glass-fx) !important;
+    -webkit-backdrop-filter: var(--glass-fx) !important;
+    border: 1px solid var(--glass-edge) !important;
+    box-shadow: var(--glass-cast), var(--glass-hl) !important;
+  }
+
+  /* Header and drawer sit above content, so they get a heavier tint
+     to stay legible while still showing motion behind them. */
+  .header {
+    background: linear-gradient(180deg, var(--glass-tint-a), var(--glass-tint-b)) !important;
+    backdrop-filter: var(--glass-fx) !important;
+    -webkit-backdrop-filter: var(--glass-fx) !important;
+    border-bottom: 1px solid var(--glass-edge) !important;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.30) !important;
+  }
+  .drawer {
+    background: linear-gradient(160deg, var(--glass-tint-a), var(--glass-tint-b)) !important;
+    backdrop-filter: var(--glass-fx) !important;
+    -webkit-backdrop-filter: var(--glass-fx) !important;
+    border-right: 1px solid var(--glass-edge) !important;
+  }
+
+  /* Specular sheen along the top edge sells the "liquid" read */
+  .card::after {
+    display: block !important;
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 14px;
+    right: 14px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+    pointer-events: none;
+  }
+  html.light .card::after {
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent);
+  }
+
+  .card:hover {
+    border-color: rgba(52, 211, 153, 0.34) !important;
+    box-shadow: 0 24px 56px rgba(0, 0, 0, 0.46), var(--glass-hl) !important;
+  }
+}
+
+/* High-contrast theme must stay fully opaque */
+html.contrast .card,
+html.contrast .header,
+html.contrast .drawer,
+html.contrast .modal-content,
+html.contrast .post-card,
+html.contrast .toast {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: #000 !important;
+  border: 1px solid #fff !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card { transition: none !important; }
+}

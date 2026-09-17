@@ -1,0 +1,151 @@
+/* ============================================================
+   R150: CONVERGENCE PASS - one design language, not four fighting
+   each other.
+
+   Owner feedback: uneven element shapes, text hard to read under
+   glass panels in light mode, a green tint sitting above the
+   hamburger/logo, a voice-assistant button that didn't look good,
+   an unattractive hero card, a login prompt stuck in the bottom
+   corner, and colors that read as flat/boring rather than designed.
+
+   ROOT CAUSE (see ds-tokens.css and main.jsx's own R97 comment):
+   redesign.css, redesign2.css, redesign3.css and redesign4.css each
+   redeclare :root color/radius/shadow tokens and layer their own
+   glass/neumorphic effects with !important, loaded AFTER
+   ds-tokens.css/ds-components.css on purpose so no selector is left
+   unstyled. That kept coverage safe but left FOUR different visual
+   languages stacked on top of each other. This file loads last and
+   is the final word: it does not delete any earlier file (auditing
+   every selector they own for safe removal is a bigger, separate
+   pass - see main.jsx's own note on that), it just resolves the
+   remaining contradictions in one place.
+   ============================================================ */
+
+/* ---- 1. One color system ----
+   Re-point every legacy token straight at ds-tokens.css's scale
+   instead of the competing palettes redeclared in redesign.css /
+   redesign2.css. This is what makes the accent color, surfaces and
+   text contrast consistent everywhere instead of drifting by
+   section, which is a big part of why the UI read as "boring" -
+   it wasn't one deliberate palette, it was several overlapping ones. */
+:root,
+html.light {
+  --bg: var(--ds-bg);
+  --clay-bg: var(--ds-bg);
+  --surface: var(--ds-surface);
+  --surface-2: var(--ds-surface-2);
+  --clay-surface: var(--ds-surface);
+  --clay-surface-2: var(--ds-surface-2);
+  --text: var(--ds-text);
+  --t2: var(--ds-text-2);
+  --t3: var(--ds-text-3);
+  --green: var(--ds-accent);
+  --g2: var(--ds-accent);
+  --g3: var(--ds-accent-2);
+  --gdim: var(--ds-accent-soft);
+  --amber: var(--ds-warn);
+  --line: var(--ds-line);
+  --line-strong: var(--ds-line-2);
+  --s1: var(--ds-surface);
+  --s2: var(--ds-surface-2);
+  --s3: var(--ds-surface-3);
+  --b1: var(--ds-line);
+  --b2: var(--ds-line-2);
+}
+body { background: var(--ds-bg) !important; }
+html.contrast body { background: #000 !important; }
+
+/* ---- 2. Kill desktop glassmorphism ----
+   redesign2.css makes cards/header/drawer translucent with a blur
+   behind them on pointer devices. A blurred gradient behind text
+   lowers real contrast no matter what the text-color token says,
+   which is exactly what made copy hard to read in light mode.
+   Flat, opaque, one shadow depth from here on. */
+.card,
+.post-card,
+.res-card,
+.fert-box,
+.day-detail,
+.detail-box,
+.lang-menu,
+.toast,
+.modal-content,
+.home-hero,
+.header,
+.drawer {
+  background: var(--ds-surface) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid var(--ds-line) !important;
+  box-shadow: var(--ds-sh-2) !important;
+}
+.card::after {
+  background: linear-gradient(90deg, transparent, var(--ds-accent-line), transparent) !important;
+}
+
+/* ---- 3. Remove the green tint above the header/hamburger ----
+   R83/R85 painted a green gradient onto .header specifically on
+   desktop; combined with the PWA theme-color meta tag (fixed in
+   index.html / vite.config.js) this was the stray green strip
+   sitting above the hamburger and logo. */
+.header,
+html.light .header {
+  background: var(--ds-surface) !important;
+  border-bottom: 1px solid var(--ds-line) !important;
+  box-shadow: none !important;
+}
+
+/* ---- 4. One radius + one shadow scale everywhere ----
+   Cards, buttons, chips, hero tiles, drawer links and the modal were
+   each pulling from a different radius (12/14/16/18/20/22/26px) and
+   a different shadow recipe (flat / neumorphic dual / glass). That
+   mismatch is the "uneven shapes" complaint. */
+.card, .modal-content, .home-hero, .ksv-card {
+  border-radius: var(--ds-r-lg) !important;
+}
+.btn, .btn-g, .btn-o, .btn-r, .btn-sm, .input, select.input, textarea.input,
+.home-hero-action, .drawer-link, .modal-close {
+  border-radius: var(--ds-r) !important;
+}
+.chip, .cg, .badge-live, .home-hero-badge {
+  border-radius: var(--ds-r-pill) !important;
+}
+.card, .post-card, .res-card, .fert-box, .toast, .modal-content {
+  box-shadow: var(--ds-sh-2) !important;
+}
+
+/* ---- 5. Voice assistant: one clean shadow, no pulsing halo ----
+   The FAB stacked a hard drop shadow with an infinite pulsing ring,
+   and its card behind it used a separate neumorphic recipe. Both are
+   flattened to the same shadow scale as everything else, and the
+   attention-grabbing pulse is removed (the component's own <style>
+   block no longer references it either - see AIVoiceAssistant.jsx). */
+.ksv-fab {
+  box-shadow: var(--ds-sh-2) !important;
+  animation: none !important;
+}
+.ksv-fab:hover { box-shadow: var(--ds-sh-3) !important; }
+.ksv-card {
+  background: var(--ds-surface) !important;
+  border: 1px solid var(--ds-line) !important;
+  box-shadow: var(--ds-sh-3) !important;
+}
+.ksv-idle .ksv-orb {
+  background: var(--ds-surface-2) !important;
+  box-shadow: inset 0 0 0 1px var(--ds-line) !important;
+}
+
+/* ---- 6. Calmer hero ----
+   Keeps the layout, drops the loud multi-color orb glow. Paired with
+   the headline copy change in HomeHero.jsx. */
+.home-hero-orb { opacity: 0.16 !important; }
+.home-hero-title span {
+  background: linear-gradient(120deg, var(--ds-accent), var(--ds-accent-2)) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ksv-fab, .home-hero-orb { animation: none !important; }
+}

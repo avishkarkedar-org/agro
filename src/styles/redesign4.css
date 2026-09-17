@@ -1,0 +1,467 @@
+/* ============================================================
+   R94: TYPOGRAPHY + PROFESSIONALISM PASS (2026-07-25)
+
+   Owner feedback, with screenshots: "see how worst the UI is...
+   make it professional, the website looks unprofessional."
+
+   This is a SEPARATE file rather than more lines appended to
+   redesign3.css on purpose. That file had grown past 400 lines,
+   and a whole-file rewrite is the operation that has silently
+   truncated mid-rule here before. A new small file carries none
+   of that risk. It is imported last, so it still wins the cascade.
+
+   ------------------------------------------------------------
+   ROOT CAUSE, found by finally reading global.css end to end.
+
+   Monospace is being used as the app's PRIMARY UI TYPEFACE:
+
+     .card-title  font-family: var(--mono); 11px; uppercase;
+                  letter-spacing: .1em;  -> 9px on mobile
+     label        font-family: var(--mono); 10px; uppercase
+     .chip        font-family: var(--mono); 10px  -> 9px <600px
+     .filter-btn  font-family: var(--mono); 10px
+     .badge       font-family: var(--mono); 10px
+
+   That is why every section header, every form label, every pill
+   and the consent checkbox render as cramped ALL-CAPS teletype.
+   Monospace has exactly one legitimate job in a product UI:
+   tabular figures, so digits line up in columns. Using it for
+   prose is what makes this read as a developer console instead of
+   a farming product.
+
+   It also actively breaks Hindi and Marathi. IBM Plex Mono has no
+   Devanagari coverage, and text-transform: uppercase is a no-op
+   for Devanagari, so translated titles were falling back to an
+   arbitrary system font at 9px with no capitalisation.
+
+   So: mono is demoted to numeric display only. Everything that is
+   language gets the sans face at a readable size in sentence case.
+
+   WASTED SPACE, same root file:
+     .card    padding: 24px
+     .card-hd padding: 14px 18px
+   Those stack - 38px of dead padding above every card's title.
+   This is the "too much empty space" seen in the screenshots.
+   Fixed with :has(), so ONLY cards using the hd/body structure
+   are zeroed. Cards that set their own inline padding (the
+   About / Terms / Privacy pages use style={{padding:"30px"}})
+   are left untouched - a blanket !important would have collapsed
+   those pages, since !important beats a non-important inline style.
+   ============================================================ */
+
+/* ---------- 1. Section titles: teletype -> product typography ---------- */
+.card-title {
+  font-family: var(--sans) !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+  letter-spacing: -0.01em !important;
+  color: var(--text) !important;
+  line-height: 1.3 !important;
+}
+@media (max-width: 768px) {
+  .card-title { font-size: 14px !important; letter-spacing: -0.01em !important; }
+}
+@media (min-width: 769px) {
+  .card-title { font-size: 15px !important; letter-spacing: -0.01em !important; }
+}
+
+/* ---------- 2. Form labels ----------
+   "USERNAME OR EMAIL" at 10px uppercase mono is the least
+   trustworthy thing you can put above a password field. */
+label {
+  font-family: var(--sans) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  color: var(--t2) !important;
+  margin-bottom: 7px !important;
+}
+
+/* ---------- 3. Chips, filters, badges ---------- */
+.chip {
+  font-family: var(--sans) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  font-size: 11.5px !important;
+}
+@media (max-width: 600px) {
+  .chip { font-size: 11.5px !important; padding: 4px 10px !important; }
+}
+.filter-btn {
+  font-family: var(--sans) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+}
+.badge {
+  font-family: var(--sans) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+}
+.logo-sub {
+  font-family: var(--sans) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.08em !important;
+}
+.ks-footer-bottom,
+.ks-footer-bottom * {
+  font-family: var(--sans) !important;
+}
+
+/* ---------- 4. Mono is retained ONLY where digits must align ----------
+   Restated explicitly so a future pass does not "clean these up":
+   these are the legitimate uses. .clock is a ticking time, .tx-num
+   is a step index, .fert-num is a dosage figure. */
+.clock,
+.tx-num,
+.fert-num,
+.mono {
+  font-family: var(--mono) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 5. Reclaim the 38px of stacked card padding ----------
+   :has() is the safety mechanism here, not a flourish. Only cards
+   that actually contain a .card-hd get zeroed, so page-level cards
+   with inline padding keep theirs. */
+.card:has(> .card-hd) {
+  padding: 0 !important;
+}
+.card:has(> .card-hd) > .card-hd {
+  padding: 15px 18px 12px !important;
+}
+.card:has(> .card-hd) > .card-body {
+  padding: 16px 18px 18px !important;
+}
+@media (min-width: 769px) {
+  .card:has(> .card-hd) > .card-hd { padding: 17px 22px 13px !important; }
+  .card:has(> .card-hd) > .card-body { padding: 18px 22px 22px !important; }
+}
+
+/* ---------- 6. Do not double up the icon on titles that ship one ----------
+   The Pest card renders its own caterpillar inside the title text,
+   so the R93 ::before chip would have produced two bugs side by
+   side. Suppressed here rather than by editing the component. */
+#sec-pest .card-title::before {
+  display: none !important;
+}
+
+/* ---------- 7. Ticker was clipped mid-word ----------
+   global.css starts the ticker at padding-left: 100% so the first
+   headline scrolls in from off-screen. R86 cut that to 1.5rem to
+   close a visual gap, but the animation still translates by -100%,
+   so on load the first headline appears already sliced in half
+   ("hna delta farmers..."). Restoring the off-screen start fixes
+   the entry; the gap R86 was chasing is better solved by
+   duplicating the headline list, not by clipping it. */
+.ticker-content {
+  padding-left: 100% !important;
+}
+
+/* ---------- 8. Restore the safe-area inset ----------
+   R93 set .main padding-bottom to a flat 96px, which overrode the
+   R76 rule that added env(safe-area-inset-bottom). On gesture-bar
+   Android that clipped the last card behind the system bar. */
+.main {
+  padding-bottom: calc(96px + env(safe-area-inset-bottom)) !important;
+}
+
+/* ---------- 9. Consent row and small print ----------
+   The login checkbox line rendered as uppercase mono, which looked
+   like fine print from a 1990s installer. */
+.consent-row,
+.consent-row *,
+.modal-content label,
+.modal-content .xs {
+  font-family: var(--sans) !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+
+/* ============================================================
+   R100: CASCADE-CONFLICT REPAIR (2026-07-26)
+
+   Appended here rather than shipped as redesign5.css so that
+   main.jsx is not touched at all. main.jsx is the file whose
+   import list caused the R95 outage, and every edit to it is a
+   whole-file rewrite. redesign4.css is already imported last, so
+   rules appended here win the cascade with zero wiring risk.
+
+   These three defects were found by reading redesign.css,
+   redesign2.css, redesign3.css and redesign4.css end to end for
+   the first time. That had never been done - it is the same blind
+   spot that produced the R95 breakage, and CONTEXT.md listed all
+   four sheets as never read.
+   ============================================================ */
+
+/* ---------- 10. Stray seedling chips on non-feature titles ----------
+   The icon chip is attached to .card-title::before with an UNSCOPED
+   default of \01F331 so that any feature added later still gets a
+   sensible icon instead of an empty box. The intent was right, the
+   selector was too broad: .card-title is not exclusive to the 19
+   feature sections. Every other .card-title in the app - dialog
+   headings, nested sub-cards inside Weather and Community, section
+   headers on the static pages - also matched, so each one grew a
+   seedling badge that means nothing in context.
+
+   R102 correction: this default and the whole #sec-* icon map are
+   declared TWICE, in ds-components.css and again in redesign3.css.
+   An earlier note here credited only redesign3.css. Both copies are
+   live; this rule sits in the last-loaded sheet so it beats both,
+   and the per-feature #sec-* selectors in both files are id
+   selectors and still outrank it.
+
+   Fix by scoping, not by deleting: the chip is switched off on the
+   bare class and switched back on inside any element whose id starts
+   with "sec-". Verified against FeatureGrid.jsx, which renders
+   <div key={id} id={f.id}> around every feature with ids sec-scan
+   through sec-fert-tracker, so the ancestor this relies on is the
+   same one the existing #sec-* rules already assume. Item 6 above
+   still suppresses the Pest chip.
+
+   Only display and content are touched. The chip's geometry - width,
+   height, radius, background, border - is left where it is and
+   inherited unchanged. */
+.card-title::before {
+  display: none;
+  content: none;
+}
+[id^="sec-"] .card-title::before {
+  display: inline-flex;
+  content: "\01F331";
+}
+
+/* ---------- 11. The card header had two separators ----------
+   R81 gives .card-hd a border-bottom hairline. R83 then adds
+   .card-hd::after, absolutely positioned at bottom:-1px, as a
+   green-to-transparent gradient line. Neither pass removed the
+   other, and both are still live, so all 19 card headers are
+   underlined twice, one pixel apart. On a dark surface that reads
+   as a single muddy 2px rule rather than as two lines, which is
+   why it survived this long without being named.
+
+   The border-bottom is kept and the gradient is dropped: a single
+   neutral hairline is the quiet-editorial choice, and it keeps
+   green reserved for action and status instead of spending it on
+   decoration under every heading. */
+.card-hd::after {
+  display: none !important;
+}
+
+/* ---------- 12. The ticker had no reduced-motion escape ----------
+   The news strip is an infinite marquee. WCAG 2.2.2 requires any
+   motion that lasts more than five seconds to be pausable, and a
+   permanently scrolling line is a genuine problem for vestibular
+   disorders - it is also the single most distracting element on the
+   page for anyone reading the cards below it.
+
+   animation: none alone would BLANK the strip, because item 7 above
+   deliberately parks the text off-screen at padding-left: 100%.
+   Stopping the animation without also zeroing that padding leaves
+   the headline sitting one full viewport to the right, invisible.
+   That is the trap this rule exists to document. Padding is zeroed
+   in the same declaration and the line is ellipsized, so
+   reduced-motion users get a readable static first headline instead
+   of an empty green bar. */
+@media (prefers-reduced-motion: reduce) {
+  .ticker-content {
+    animation: none !important;
+    padding-left: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+}
+
+
+/* ============================================================
+   R101: TALL DIALOGS WERE CLIPPED UNREACHABLE (2026-07-26)
+
+   Found by reading AgroIntelScan.jsx end to end (45 KB, never
+   audited before). Both fixes below are CSS-only and deliberately
+   so: AgroIntelScan.jsx and Weather.jsx are each far over the
+   ~720-760 line push-truncation limit (KL#15), so they cannot
+   safely be edited as whole files with the tooling available.
+   Anything fixable from the stylesheet gets fixed here instead.
+   ============================================================ */
+
+/* ---------- 13. A dialog built on .card could not be scrolled ----------
+   Four dialogs use .card as their box rather than .modal-content:
+   ScanHistory, AccessCodeModal, ConfirmHost, OnboardingTutorial.
+   That is a supported pattern - but ds-components.css sets
+   .card { overflow: hidden !important } and neither global.css nor
+   ds-components.css gives those cards a max-height on desktop.
+
+   The result is the KL#37 failure again, one level up. Scan History
+   keeps ten entries at roughly 65px each, plus a heading and a
+   Clear button: comfortably past 700px. The card grows taller than
+   the viewport, .modal-bg is position:fixed so the page behind it
+   cannot scroll, and overflow:hidden means the card will not scroll
+   either. The last few entries and the Clear History button are
+   simply not reachable - not misplaced, not ugly, GONE. Any dialog
+   whose content grows with data hits this.
+
+   overflow-y needs !important because it is overriding an
+   !important declaration in an earlier file (KL#30). overflow-x is
+   left hidden so the rounded corners and the ::after accent still
+   clip as intended - only vertical scrolling is opened up.
+
+   The max-height is scoped to >=601px on purpose. Below that,
+   global.css already converts these cards into bottom sheets with
+   max-height: 92vh, and that contract is not something to disturb
+   from here - but those sheets need the scroll fix just as much,
+   which is why overflow-y is applied unconditionally. */
+.modal-bg > .card,
+.modal-overlay > .card,
+.modal > .card {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+@media (min-width: 601px) {
+  .modal-bg > .card,
+  .modal-overlay > .card,
+  .modal > .card {
+    max-height: 88vh;
+  }
+}
+
+/* ---------- 14. .chip cx was never defined ----------
+   ds-components.css defines exactly four chip variants: cg (green),
+   ca (amber), cr (red), cb (blue). There is no cx. AgroIntelScan
+   alone asks for "chip cx" eleven times - the crop list on the
+   dropzone, the file-size pill, the pathogen pill, and critically
+   the DEFAULT branch of its severity mapping, which is what Low and
+   Moderate severity render as. R99.1 hit the same missing class in
+   YoutubePlayer and fixed it by renaming the class in that one
+   component; that does not scale to eleven call sites in a file
+   that is too large to push.
+
+   So cx is defined here as what every one of those call sites is
+   actually reaching for: a neutral, non-semantic chip. This is the
+   better fix regardless - it keeps green, amber, red and blue
+   meaning something, instead of pressing a status colour into
+   service for a filename.
+
+   Every var() carries a literal fallback (KL#31), because these
+   legacy token names are exactly the ones that went missing during
+   the R95 stylesheet unload. */
+.chip.cx {
+  background: var(--s3, rgba(255, 255, 255, 0.06)) !important;
+  border: 1px solid var(--b2, rgba(255, 255, 255, 0.14)) !important;
+  color: var(--t2, rgba(255, 255, 255, 0.74)) !important;
+}
+html.light .chip.cx {
+  background: var(--s3, rgba(13, 27, 20, 0.05)) !important;
+  border: 1px solid var(--b2, rgba(13, 27, 20, 0.12)) !important;
+  color: var(--t2, rgba(15, 26, 20, 0.72)) !important;
+}
+
+
+/* ============================================================
+   R102: COLOUR SYSTEM COMPLETION (2026-07-26)
+
+   A hypothesis worth recording because it was WRONG: the status
+   chips looked like they must be broken, because ds-components.css
+   colours them with --ds-warn-soft, --ds-danger-soft and
+   --ds-info-soft, and no record existed of those tokens being
+   defined. Reading ds-tokens.css end to end disproved it - all
+   three are defined, in both themes. Nothing was broken. The fix
+   that was about to be written would have been the fourth
+   fictional issue in this project's history.
+
+   What IS wrong is narrower and real, and it is a weight problem
+   rather than a missing-colour problem. See below.
+   ============================================================ */
+
+/* ---------- 15. Status chips had a near-invisible border ----------
+   ds-components.css borders the green chip with --ds-accent-line,
+   an 0.26-alpha edge, but borders the amber, red and blue chips
+   with their own 0.12-alpha FILL tint:
+
+     .chip.cg  border-color: var(--ds-accent-line)   0.26
+     .chip.ca  border-color: var(--ds-warn-soft)     0.12
+     .chip.cr  border-color: var(--ds-danger-soft)   0.12
+     .chip.cb  border-color: var(--ds-info-soft)     0.12
+
+   Using the fill as the edge means the border and the background
+   are the same colour, so three of the four status chips have no
+   perceptible outline while the green one does. Against a card at
+   --ds-surface the amber and red chips read as soft smudges rather
+   than as deliberate status markers - which matters, because these
+   are the chips carrying pest severity and price-change direction,
+   the two things a farmer is actually scanning for.
+
+   The accent already had a separate -line token at 0.26. The other
+   three simply never got one. Adding them completes the pattern
+   instead of inventing a new one, and it is why the values below
+   are 0.26 dark / 0.22 light: they mirror --ds-accent-line exactly.
+   Light-theme alphas are slightly lower because these hues are much
+   darker in light mode, so the same alpha would read as heavier. */
+:root {
+  --ds-warn-line: rgba(251, 191, 36, 0.26);
+  --ds-danger-line: rgba(251, 113, 133, 0.26);
+  --ds-info-line: rgba(96, 165, 250, 0.26);
+  --ds-scrim: rgba(0, 0, 0, 0.72);
+}
+html.light {
+  --ds-warn-line: rgba(180, 83, 9, 0.22);
+  --ds-danger-line: rgba(190, 18, 60, 0.22);
+  --ds-info-line: rgba(29, 78, 216, 0.22);
+  --ds-scrim: rgba(13, 27, 20, 0.55);
+}
+
+.chip.ca { border-color: var(--ds-warn-line, rgba(251, 191, 36, 0.26)) !important; }
+.chip.cr { border-color: var(--ds-danger-line, rgba(251, 113, 133, 0.26)) !important; }
+.chip.cb { border-color: var(--ds-info-line, rgba(96, 165, 250, 0.26)) !important; }
+
+/* .btn-r had the same problem: a destructive button outlined in a
+   0.12 tint does not look like a button at all until hovered. */
+.btn-r {
+  border: 1px solid var(--ds-danger-line, rgba(251, 113, 133, 0.26)) !important;
+}
+.btn-r:hover {
+  background: var(--ds-danger-soft, rgba(251, 113, 133, 0.12)) !important;
+  border-color: var(--ds-danger, #fb7185) !important;
+}
+
+/* ---------- 16. --purple was never themed ----------
+   The legacy token bridge declares --purple and --pdim under a
+   combined ":root, html.light" selector with a single hardcoded
+   value, #a78bfa. Every other hue in that bridge points at a --ds-*
+   token and therefore flips with the theme; these two do not. On the
+   light canvas (--ds-surface #ffffff) a pale lavender lands at
+   roughly 2:1 against white, well under the 4.5:1 AA floor, so any
+   text using it is effectively unreadable in light mode.
+
+   Given a value rather than removed, because removing it would
+   orphan any component reading it - the exact R95 failure mode. */
+html.light {
+  --purple: #6d28d9;
+  --pdim: rgba(109, 40, 217, 0.10);
+}
+html.contrast {
+  --purple: #c4b5fd;
+  --pdim: transparent;
+}
+
+/* ---------- 17. High contrast had no status hues ----------
+   html.contrast in ds-tokens.css overrides surfaces, lines, text
+   and --ds-accent, but leaves --ds-warn, --ds-danger and --ds-info
+   at their dark-theme values. Those three do clear AA on pure black
+   on their own, so this is not a contrast failure and is not being
+   "fixed" as one - but their -line and -soft companions are alpha
+   tints, and alpha tints over #000 collapse to nearly nothing,
+   which is why contrast mode showed status chips as plain outlines.
+   Made explicit and opaque so the intent is not mistaken for an
+   oversight by a later pass. */
+html.contrast {
+  --ds-warn-line: #fbbf24;
+  --ds-danger-line: #fb7185;
+  --ds-info-line: #60a5fa;
+  --ds-scrim: rgba(0, 0, 0, 0.9);
+}

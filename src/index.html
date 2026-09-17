@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0a0d0c">
+  <script>
+    /* THEME_INIT_R92_2 - runs before first paint to kill the theme FOUC.
+       App.jsx only resolves the theme after React mounts and after the CSS
+       bundle evaluates, so every cold load flashed a light background before
+       dark mode applied. On a phone over a slow connection that flash is very
+       visible, and it is worst for the users most likely to be in the dark.
+
+       This mirrors resolveTheme() in App.jsx exactly: an explicit stored value
+       wins, and "auto" maps to light between 06:00 and 18:00, dark otherwise.
+       If the two ever diverge the app simply re-applies the correct class on
+       mount, so the failure mode is a brief flash, never a wrong theme.
+
+       R150: the static theme-color above and the two values this script sets
+       now match ds-tokens.css's --ds-bg exactly (dark #0a0d0c, light #eef2ee)
+       instead of a bright green placeholder and a set of stale hex values
+       from an earlier palette. That mismatch was the "green element" flash
+       users saw above the header on load, independent of the .header CSS fix.
+
+       safeSetLS writes raw strings (no JSON), so getItem is read directly.
+       The quote-strip is defensive in case that ever changes to JSON.
+       Everything is wrapped in try/catch because localStorage throws in
+       private mode on some browsers, and a throw here would block the app. */
+    (function () {
+      try {
+        var t = localStorage.getItem("agrointel_theme");
+        t = t ? String(t).replace(/^"+|"+$/g, "") : "auto";
+        if (t === "auto") {
+          var h = new Date().getHours();
+          t = (h >= 6 && h < 18) ? "light" : "dark";
+        }
+        var c = document.documentElement.classList;
+        c.remove("light", "contrast");
+        if (t === "light") { c.add("light"); }
+        else if (t === "contrast") { c.add("contrast"); }
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) {
+          m.setAttribute(
+            "content",
+            t === "light" ? "#eef2ee" : (t === "contrast" ? "#000000" : "#0a0d0c")
+          );
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <!-- FAVICON_R151 - explicit favicon so browsers stop guessing which icon
+       from the PWA manifest's icons[] list to use for the tab/toolbar icon.
+       Without this, some browsers picked the manifest's "maskable" icon
+       (which requires an opaque background per spec) as the favicon, showing
+       a solid colored square above the header instead of the transparent
+       wordmark - that square was the persistent "green element" users kept
+       reporting, unrelated to the .header CSS or theme-color fixes above. -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌾</text></svg>">
+  <title>AgroIntel — Smart Farming Intelligence</title>
+  <meta name="description" content="AgroIntel - AI-powered smart farming assistant for Indian farmers. Scan plant diseases, get weather forecasts, check mandi prices, plan crops, and connect with the farming community.">
+  <meta name="keywords" content="farming, agriculture, crop disease, plant scanner, mandi prices, weather forecast, India, farmer, AgroIntel">
+  <meta name="author" content="AgroIntel">
+  <meta property="og:title" content="AgroIntel — Smart Farming Intelligence">
+  <meta property="og:description" content="AI-powered farming assistant: scan diseases, check mandi prices, get weather forecasts, and connect with farmers across India.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://agrointel.pages.dev">
+  <meta property="og:image" content="https://agrointel.pages.dev/icon-512.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="AgroIntel — Smart Farming Intelligence">
+  <meta name="twitter:image" content="https://agrointel.pages.dev/icon-512.png">
+  <meta name="twitter:description" content="AI-powered farming assistant for Indian farmers. Scan diseases, check prices, plan crops.">
+
+  <!-- BOOT_ROUND_TRIPS_R123 - 95% of users are on a phone, so the boot path
+       is measured in round trips, not kilobytes.
+
+       App.jsx fetches /api/settings, /api/news and POST /api/track from the
+       Render backend as soon as it mounts, behind an 8s splash timeout.
+       Without this hint the browser only learns that origin exists when the
+       first fetch is issued, paying DNS + TCP + TLS before requesting a
+       single byte - 200-500ms on 4G, before Render's own free-tier cold
+       start even begins. Warming it in parallel with HTML parsing is free.
+
+       dns-prefetch is kept alongside preconnect as graceful degradation for
+       browsers that ignore or cap preconnect. crossorigin is set because the
+       API is called cross-origin without cookies; if it ever mismatches the
+       real request mode the socket is simply not reused, so the worst case
+       is "no benefit", never a failed request. If VITE_API_URL points
+       somewhere else at build time this hint is just unused. -->
+  <link rel="preconnect" href="https://agrointel-backend-ucic.onrender.com" crossorigin>
+  <link rel="dns-prefetch" href="//agrointel-backend-ucic.onrender.com">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Fonts hoisted here from a CHAINED @import inside redesign.css
+       (BOOT_ROUND_TRIPS_R123). That @import forced three serialized round
+       trips before a heading could paint in its real face: download
+       redesign.css, parse it, request the font CSS, then request the woff2.
+       Headings use --serif, which redesign.css re-points to Space Grotesk,
+       so every h1-h4 waited on that chain along with Inter 800.
+
+       Same families and weights that were ALREADY being fetched, so this
+       adds no font bytes - identical woff2 URLs, downloaded once, and the
+       redundant CSS request hits cache. Only the start time changes.
+       Inter 800 and Space Grotesk 500;600;700 are the additions here; they
+       were in the @import but missing from this link.
+
+       The @import in redesign.css is left in place on purpose: that file is
+       ~30 KB, above the safe push size, and rewriting 800 lines of
+       load-bearing legacy CSS to drop one redundant line is the trade that
+       broke the site in R95. Redundant is not harmful. -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@500;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --sans: 'Inter', 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      --serif: 'Playfair Display', Georgia, serif;
+      --mono: 'IBM Plex Mono', monospace;
+    }
+  </style>
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"WebApplication","name":"AgroIntel","description":"AI-powered smart farming intelligence platform for Indian farmers","url":"https://agrointel.pages.dev","applicationCategory":"Agriculture","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"INR"},"author":{"@type":"Organization","name":"AgroIntel"}}
+  </script>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div id="root"></div>
+  <script type="module" src="/main.jsx"></script>
+  <div id="google_translate_element" style="display:none;"></div>
+  <script type="text/javascript">
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({pageLanguage: 'en', includedLanguages: 'hi,mr', autoDisplay: false}, 'google_translate_element');
+    }
+
+    /* TRANSLATE_LAZY_R122 - the Google Translate widget is now loaded ONLY
+       for users who are actually reading in Hindi or Marathi, and loaded
+       asynchronously even then.
+
+       It used to be a plain blocking <script> on every single load: a DNS
+       lookup, a TLS handshake, a script download and the widget's own
+       follow-up requests, all on the critical path, for every user
+       including the majority who never leave English. Smartphone users on
+       a slow connection paid that on every visit.
+
+       WHY A GATE IS SAFE HERE (read LangSwitcher.jsx before changing this):
+       LangSwitcher never calls window.google. It writes the googtrans
+       cookie and then calls window.location.reload(), so the preference is
+       ALWAYS committed before the next document load - which is the load
+       this gate runs on. Nothing reads the widget synchronously either:
+       LangSwitcher polls for .goog-te-combo starting at 1000ms and retries
+       every 500ms forever, so an async script arriving late is fine.
+
+       BOTH sources of truth are checked, because either can be absent:
+       the googtrans cookie is what the widget itself acts on, and
+       agrointel_lang is the key LangSwitcher writes. localStorage throws
+       in private mode on some browsers, cookies can be cleared on their
+       own, so either one being non-English is enough to load the widget.
+       Both reads are in try/catch - a throw here would block the app.
+
+       If this gate is ever wrong for a returning non-English user, the
+       page renders in English and one tap on the language switcher
+       reloads it correctly. Degraded, never broken.
+
+       DO NOT convert this back to a static <script> tag to "fix" a
+       translation bug without first confirming the cookie is being
+       written - the cookie, not this tag, is what selects the language. */
+    (function () {
+      function needsTranslate() {
+        try {
+          if (/(^|;\s*)googtrans=\/en\/(hi|mr)/.test(document.cookie)) {
+            return true;
+          }
+        } catch (e) {}
+        try {
+          var l = localStorage.getItem("agrointel_lang");
+          l = l ? String(l).replace(/^"+|"+$/g, "") : "en";
+          if (l && l !== "en") { return true; }
+        } catch (e) {}
+        return false;
+      }
+      if (!needsTranslate()) { return; }
+      var s = document.createElement("script");
+      s.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+      s.async = true;
+      document.body.appendChild(s);
+    })();
+  </script>
+  <script type="text/javascript">
+    /* BOOT_WATCHDOG_R125 - a floor under the black screen.
+
+       On 26 Jul 2026 the app rendered a completely black screen in
+       production. Black with NO error text means React never executed at
+       all: had it mounted and thrown, ErrorBoundary would have shown its
+       fallback. The usual cause here is the service worker - vite-plugin-pwa
+       precaches index.html with skipWaiting:true, so a client can end up
+       holding an index.html that references hashed bundles from a build that
+       no longer exists. Every module 404s, nothing mounts, and reloading
+       does not help because the same worker serves the reload.
+
+       The owner can clear site data. A farmer on a phone cannot, and 95% of
+       users are on a phone, so that was an unrecoverable dead end.
+
+       This does NOT fix a known bug - the cause of that incident is still
+       unconfirmed. It converts the worst case from "black rectangle" into
+       "self-recovers, or at minimum shows a Retry button".
+
+       WHY #root's childElementCount IS THE RIGHT SIGNAL:
+       SplashScreen renders INSIDE #root, so a visible splash already counts
+       as mounted and this stays out of the way no matter how slow the
+       backend is. An empty #root after 12s means React never ran.
+
+       WHY navigator.serviceWorker.controller IS REQUIRED BEFORE WIPING:
+       it keeps this from being a blunt cache-wiper. With no worker in
+       control there is no stale precache to blame, so clearing storage would
+       force a full re-download and fix nothing; that case goes straight to
+       the Retry screen instead.
+
+       LOOP SAFETY: a sessionStorage one-shot flag means at most ONE extra
+       reload per session, and it is cleared on a successful boot so a later
+       failure can still self-heal. A 3s safety timer reloads even if
+       caches.delete() or unregister() hangs, so recovery cannot itself
+       become the hang. 12s is deliberately generous - a big bundle on a weak
+       3G phone must be allowed to finish, and firing early only costs a
+       wasted re-download.
+
+       Every storage call is wrapped: sessionStorage, caches and
+       serviceWorker all throw in private mode on some browsers, and a throw
+       in this script would defeat its whole purpose. */
+    (function () {
+      var FLAG = "agrointel_boot_recovery";
+      var WAIT_MS = 12000;
+      var HANG_MS = 3000;
+
+      function isMounted() {
+        var root = document.getElementById("root");
+        return !!(root && root.childElementCount > 0);
+      }
+
+      /* Inline styles and a system font stack on purpose: if this renders,
+         the CSS bundle has provably not loaded either, so it cannot rely on
+         global.css or any design token. English-only is a real limitation -
+         the language switcher is in the JS that just failed - hence the
+         wheat mark and one obvious button rather than a wall of text. */
+      function showRetry() {
+        var root = document.getElementById("root");
+        if (!root || root.childElementCount > 0) { return; }
+        root.innerHTML =
+          '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;">' +
+          '<div style="max-width:320px;text-align:center;font-family:system-ui,-apple-system,\'Segoe UI\',Roboto,sans-serif;color:#e8f0ea;">' +
+          '<div style="font-size:40px;line-height:1;margin-bottom:14px;">🌾</div>' +
+          '<div style="font-size:16px;font-weight:600;margin-bottom:8px;">AgroIntel could not finish loading</div>' +
+          '<div style="font-size:13px;opacity:0.75;margin-bottom:18px;line-height:1.5;">Please check your connection and try again.</div>' +
+          '<button id="agrointel-boot-retry" style="background:#16a34a;color:#fff;border:0;border-radius:12px;padding:12px 22px;font-size:14px;font-weight:600;min-height:44px;cursor:pointer;">Retry</button>' +
+          '</div></div>';
+        var b = document.getElementById("agrointel-boot-retry");
+        if (b) {
+          b.addEventListener("click", function () {
+            try { sessionStorage.removeItem(FLAG); } catch (e) {}
+            window.location.reload();
+          });
+        }
+      }
+
+      setTimeout(function () {
+        if (isMounted()) {
+          // Boot succeeded - allow a future failure to self-heal again.
+          try { sessionStorage.removeItem(FLAG); } catch (e) {}
+          return;
+        }
+
+        var controlled = false;
+        try {
+          controlled = !!(navigator.serviceWorker && navigator.serviceWorker.controller);
+        } catch (e) {}
+
+        var alreadyTried = false;
+        try { alreadyTried = sessionStorage.getItem(FLAG) === "1"; } catch (e) {}
+
+        if (!controlled || alreadyTried) {
+          showRetry();
+          return;
+        }
+
+        try { sessionStorage.setItem(FLAG, "1"); } catch (e) {}
+
+        var reloaded = false;
+        function reloadOnce() {
+          if (reloaded) { return; }
+          reloaded = true;
+          window.location.reload();
+        }
+        setTimeout(reloadOnce, HANG_MS);
+
+        var jobs = [];
+        try {
+          if (window.caches && caches.keys) {
+            jobs.push(
+              caches.keys().then(function (keys) {
+                return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+              })
+            );
+          }
+        } catch (e) {}
+        try {
+          if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+            jobs.push(
+              navigator.serviceWorker.getRegistrations().then(function (regs) {
+                return Promise.all(regs.map(function (r) { return r.unregister(); }));
+              })
+            );
+          }
+        } catch (e) {}
+
+        if (!jobs.length) { reloadOnce(); return; }
+        Promise.all(jobs).then(reloadOnce)["catch"](reloadOnce);
+      }, WAIT_MS);
+    })();
+  </script>
+</body>
+</html>

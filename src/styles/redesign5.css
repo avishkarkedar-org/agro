@@ -1,0 +1,776 @@
+/* =============================================================
+ * redesign5.css - R108 - ELEMENT SIZE CONSISTENCY
+ *                 R118 - FOOTER ALIGNMENT (section 9)
+ *                 R120 - GAPLESS TICKER (section 10)
+ *                 R126 - VOICE CARD + TOUCH TARGETS (section 11)
+ *                 R127 - SURFACE TOKEN UNIFICATION (section 12)
+ *                 R128 - DRAWER BLUR + CLOSE TARGET (section 13)
+ *                 R129 - AUTH LINKS + MODAL CLOSE (section 14)
+ *
+ * HISTORY OF THIS FILE
+ * R102 created it as a comment-only stub by mistake (the change
+ * belonged in redesign4.css) and never imported it, leaving an
+ * inert tombstone. R108 gave it a real job. R108.1 fixed a
+ * border regression R108 introduced - see section 1. R118 added
+ * section 9. R120 added section 10. R126 added section 11.
+ * R127 added section 12. R128 added 13. R129 added 14.
+ *
+ * WHY IT EXISTS
+ * The owner reported that element sizes look inconsistent across
+ * the UI. They are. Controls were sized per-component, so the
+ * same visual role - a small outline button, say - rendered at
+ * several different heights and font sizes depending on whether
+ * global.css, ds-components.css or an inline style got there
+ * first. This file defines ONE scale and applies it everywhere.
+ *
+ * LOAD ORDER
+ * Loads LAST, after redesign4.css. That means it wins on equal
+ * specificity WITHOUT !important, which matters - see the note
+ * on heights below. Section 12 depends on this position.
+ *
+ * THE !important RULE (KL#29, KL#30)
+ * !important beats inline styles. Several components set
+ * minHeight inline for deliberate touch-target reasons. So
+ * heights here are plain declarations: this file sets the
+ * BASELINE, and a component with a reason can still override it.
+ * !important is used ONLY for the mobile touch-target floor,
+ * where being thumb-reachable outranks any component's opinion,
+ * and in sections 9, 10, 11, 13 and 14 where it must outrank an
+ * existing !important or a component-injected <style> block.
+ *
+ * SCOPE
+ * Imported by src/main.jsx only, so it styles the FARMER APP.
+ * The admin panel has its own stylesheets and is untouched -
+ * do not add admin-only classes here expecting them to work.
+ *
+ * SCALE (single source of truth)
+ *   control height   40px   /  small 34px  /  mobile floor 44px
+ *   control text     13px   /  small 12px
+ *   chip / badge     22px high, 11.5px text
+ *   icon in control  16px   /  in card header 18px
+ * ============================================================= */
+
+/* ---- 1. CONTROL METRICS -------------------------------------
+ * One box model for everything the user can click or type in.
+ * The padding is unified too: two controls at the same height
+ * still look mismatched if their inner spacing differs, which
+ * was the actual complaint.
+ *
+ * R108.1 REGRESSION FIX - READ BEFORE EDITING
+ * R108 had border-width/border-style in this shared group, which
+ * included .btn. CSS defaults border-color to currentColor, so
+ * every button with no declared border gained a 1px border in
+ * its own text colour - a white outline on the solid green
+ * .btn-g. Border properties now live in the inputs-only group
+ * below. Do NOT put a border shorthand on .btn here; let each
+ * button variant own its border. */
+.btn,
+.form-input,
+input[type="text"],
+input[type="search"],
+input[type="number"],
+input[type="tel"],
+input[type="email"],
+input[type="password"],
+select,
+.input {
+  min-height: 40px;
+  padding: 8px 14px;
+  font-size: 13px;
+  line-height: 1.3;
+  border-radius: var(--r-md, 14px);
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+/* Border metrics for TEXT FIELDS ONLY. These all already have a
+ * visible border, so normalising its weight is safe here and
+ * unsafe on buttons. */
+.form-input,
+input[type="text"],
+input[type="search"],
+input[type="number"],
+input[type="tel"],
+input[type="email"],
+input[type="password"],
+select,
+.input,
+textarea,
+textarea.form-input {
+  border-width: 1px;
+  border-style: solid;
+}
+
+/* Buttons centre their content; inputs must not, or the caret
+ * sits oddly in a tall field. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* The small variant. 34px is the smallest that still reads as a
+ * real control next to 40px siblings. */
+.btn-sm {
+  min-height: 34px;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: var(--r-sm, 8px);
+}
+
+/* Textareas size by rows, so only the horizontal metrics and the
+ * type scale are shared. */
+textarea,
+textarea.form-input {
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  border-radius: var(--r-md, 14px);
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+/* ---- 2. CHIPS AND BADGES -----------------------------------
+ * These sized to their text, so a row of them was visibly
+ * ragged - a two-character chip was shorter than a ten-
+ * character one. Fixed height, centred content.
+ *
+ * :not(.btn) matters: some chips are really buttons and carry
+ * both classes. Without this they would be squashed from the
+ * 40px control height to 22px, because this rule comes later at
+ * equal specificity (KL#30). */
+.chip:not(.btn),
+.badge:not(.btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
+  padding: 0 9px;
+  line-height: 1;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+/* ---- 3. ICON SIZING ----------------------------------------
+ * Inline SVGs render at whatever their width/height attributes
+ * say, which varied per component. Pin them to the scale so an
+ * icon never dwarfs or hides beside its label. */
+.btn svg,
+.chip svg,
+.badge svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.card-hd svg,
+.card-title svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* A control holding only an icon should be square, not a wide
+ * pill with a lonely glyph in the middle. */
+.btn.btn-icon {
+  padding: 0;
+  width: 40px;
+}
+
+.btn.btn-icon.btn-sm {
+  width: 34px;
+}
+
+/* ---- 4. THE CLOSE BUTTON -----------------------------------
+ * global.css sets .modal-close to 34px. Restated here only to
+ * keep it square and centred; several modals were rendering it
+ * as a slightly oblong box because the glyph set the width.
+ *
+ * R129 NOTE: this explicit height is exactly why global.css's
+ * coarse-pointer 44px block never lifted this button on phones -
+ * that block sets min-height, and a min-height cannot raise an
+ * element that has been given a fixed height. See section 14. */
+.modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* ---- 5. FORM RHYTHM ----------------------------------------
+ * Stacked fields had inconsistent gaps because each form picked
+ * its own margin. One vertical rhythm instead. */
+.form-group {
+  margin-bottom: 14px;
+}
+
+.form-group > label,
+.form-group > .form-label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+/* ---- 6. MOBILE TOUCH FLOOR ---------------------------------
+ * The one place !important is justified. Below 600px every
+ * interactive element gets at least 44px of height, the minimum
+ * comfortable thumb target. A 34px .btn-sm is fine with a mouse
+ * and genuinely hard to hit on a phone, and most of this app's
+ * users are on phones.
+ *
+ * Chips are excluded: many are status indicators, not controls,
+ * and inflating them to 44px would wreck the layouts they sit
+ * in. Chips that ARE buttons carry .btn too and are covered.
+ *
+ * NOTE (R126): this floor only reaches elements that carry .btn
+ * or one of the input classes. A component that styles a bespoke
+ * class name in its own injected <style> is NOT covered - see
+ * section 11 for the voice assistant, which is the first case of
+ * this found in the wild.
+ *
+ * R128/R129 bounded the rest by code search: only four
+ * farmer-app components inject a <style> block - SidebarDrawer,
+ * ProfileModal, AuthModal, AIVoiceAssistant. All four have now
+ * been read in full and are covered by sections 11, 13 and 14.
+ * ProfileModal needed nothing: it uses the shared classes. */
+@media (max-width: 600px) {
+  .btn,
+  .btn-sm,
+  .form-input,
+  input[type="text"],
+  input[type="search"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="email"],
+  input[type="password"],
+  select,
+  .input {
+    min-height: 44px !important;
+  }
+
+  .btn.btn-icon {
+    width: 44px !important;
+  }
+
+  /* Keep the type readable at the larger tap size. iOS also zooms
+   * the page on focus for any input under 16px, so the search and
+   * text fields step up to avoid that jump. */
+  .form-input,
+  input[type="text"],
+  input[type="search"],
+  input[type="email"],
+  .input {
+    font-size: 16px;
+  }
+}
+
+/* ---- 7. FOCUS RING ----------------------------------------
+ * Audit item 38. Focus was inconsistent - some controls showed
+ * the browser default, some had it suppressed with no
+ * replacement, which is a keyboard-navigation dead end. One
+ * visible ring, on keyboard focus only, so mouse users do not
+ * see it after every click. */
+.btn:focus-visible,
+.form-input:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.input:focus-visible,
+.modal-close:focus-visible {
+  outline: 2px solid var(--ds-accent, #34d399);
+  outline-offset: 2px;
+}
+
+/* ---- 8. DISABLED STATE ------------------------------------
+ * Some disabled controls looked identical to enabled ones, so a
+ * button that ignored taps gave no reason why. */
+.btn:disabled,
+.btn[disabled],
+.form-input:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ---- 9. FOOTER ALIGNMENT (FOOTER_ALIGN_R118) ---------------
+ * The footer was raised repeatedly and the cause was never a
+ * single bad rule - it was three correct rules disagreeing.
+ *
+ * .ks-social is declared in FOUR sheets:
+ *   global.css       column, align-items: flex-start
+ *   ds-components.css colours only
+ *   redesign2.css    R88 column + align-items: center !important
+ *                    R91 align-items: flex-start !important
+ *   redesign3.css    .ks-social-row font-size: 12px !important
+ *
+ * R88 wanted a compact centred column; R91 overrode it to flush
+ * left. Meanwhile the markup wrapped the whole thing in .tc, so
+ * the copyright line stayed CENTRED while the links went LEFT.
+ * Both halves did exactly what they were told and the result
+ * looked broken. That is KL#45 and KL#30 in one place: the same
+ * property set in two sheets, later wins, and nobody looked at
+ * the other half of the component.
+ *
+ * Decisions here:
+ *   - ROW, not column. Eight short links stacked vertically made
+ *     a tall narrow strip with the whole page width empty beside
+ *     it. Wrapped into a row it is one or two lines.
+ *   - LEFT, not centred, keeping R91's reasoning (a centred list
+ *     of short links reads as a personal page). To switch to
+ *     centred, change justify-content below to `center` and
+ *     .ks-footer-copy's text-align to `center`. Those two lines
+ *     are the whole change.
+ *   - !important is required on flex-direction / align-items /
+ *     gap ONLY because redesign2.css already marks them
+ *     !important. Nothing else here needs it.
+ *   - The row-gap/column-gap pair in `gap` is deliberate: a
+ *     wrapped row needs a smaller gap between lines than between
+ *     items, or the second line looks detached. */
+.ks-social {
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 2px 18px !important;
+  margin-bottom: 2px !important;
+}
+
+/* Font size restated because redesign3.css marks it !important.
+ * 11.5px against a 14px icon is the same ratio the chip scale in
+ * section 2 uses, so the footer stops being the one place with
+ * its own metric. */
+.ks-social-row {
+  padding: 5px 0 !important;
+  gap: 7px !important;
+  font-size: 11.5px !important;
+}
+
+.ks-social-row svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* The copyright line. This class is new in R118 - previously this
+ * element had only .mono.t3 and inherited its centring from the
+ * wrapper's .tc, which is exactly why it disagreed with the
+ * links. Aligning it here keeps both halves in one place. */
+.ks-footer-copy {
+  text-align: left;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  color: var(--t3);
+  margin-top: 8px;
+}
+
+/* On a narrow phone eight items wrap to three or four lines, so
+ * tighten the column gap to keep the block compact. */
+@media (max-width: 520px) {
+  .ks-social {
+    gap: 0 14px !important;
+  }
+
+  .ks-social-row {
+    padding: 4px 0 !important;
+  }
+}
+
+/* ---- 10. GAPLESS TICKER (TICKER_LOOP_R120) -----------------
+ * The news strip emptied for several seconds between passes.
+ *
+ * The old mechanism, from global.css and re-asserted by
+ * ds-components.css and redesign4.css item 7:
+ *   padding-left: 100% and translateX(0) -> translateX(-100%)
+ *   on a SINGLE copy of the headline list.
+ * The full-width left padding parks the text one container-width
+ * to the right so it scrolls in from off-screen. Once it has
+ * passed, that same padding is all that remains on screen - an
+ * empty strip. The gap is not a bug in any one rule; it is what
+ * this mechanism does.
+ *
+ * redesign4.css item 7 already named the correct fix -
+ * "better solved by duplicating the headline list, not by
+ * clipping it" - and the duplication was never added to the
+ * markup. R120 added it (two .ticker-seg spans in App.jsx), so
+ * the mechanism can finally change here:
+ *   a flex track at width: max-content holding two identical
+ *   copies, translated 0 -> -50%.
+ * At -50% the second copy occupies exactly the position the
+ * first started from, so the restart is invisible.
+ *
+ * DO NOT reintroduce padding-left on .ticker-content. It has to
+ * be zero for -50% to align, and it is what caused both the gap
+ * AND (when R86 cut it to 1.5rem while the animation still moved
+ * -100%) the half-sliced first headline.
+ *
+ * The trailing space before the list repeats is padding-right on
+ * EVERY segment. It must not be a margin on one segment or
+ * spacing on the track: the two halves have to stay exactly
+ * equal in width or the strip jumps once per cycle. */
+.ticker-content {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  width: max-content !important;
+  padding-left: 0 !important;
+  white-space: nowrap !important;
+  animation: ticker-loop 60s linear infinite !important;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.ticker-seg {
+  display: inline-block;
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding-right: 3.5rem;
+}
+
+@keyframes ticker-loop {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Hover-pause MUST be restated here. global.css declares
+ *   .ticker-content:hover { animation-play-state: paused; }
+ * with no !important, and the `animation` shorthand above resets
+ * every longhand it covers - including animation-play-state to
+ * `running` - with !important attached. That would outrank the
+ * plain hover rule and silently remove the pause. A permanent
+ * marquee needs to be pausable (WCAG 2.2.2), so this is a
+ * functional requirement, not polish. */
+.ticker-content:hover,
+.ticker-content:focus-within {
+  animation-play-state: paused !important;
+}
+
+/* redesign.css speeds the ticker up to 38s on small screens with
+ * !important. This file loads later, so the shorthand above would
+ * have overridden that duration at equal importance (KL#30) and
+ * quietly slowed the strip down on phones. Intent preserved,
+ * rescaled: the travel distance is now one copy's width rather
+ * than a copy plus a full viewport. */
+@media (max-width: 600px) {
+  .ticker-content {
+    animation-duration: 45s !important;
+  }
+}
+
+/* Reduced motion. redesign4.css item 12 stops the animation and
+ * zeroes padding-left - the second half of that is essential
+ * (KL#41): with the text parked at padding-left: 100% and no
+ * animation, the strip renders EMPTY. That rule stays correct,
+ * but it was written for a single-copy inline-block track, so two
+ * things need fixing now:
+ *   - text-overflow: ellipsis does nothing on a flex container,
+ *   - with the animation stopped, both copies sit at the start.
+ * So the track reverts to a plain block, the duplicate is hidden,
+ * and the ellipsis works again. Reduced-motion users get one
+ * readable static headline, exactly as before. */
+@media (prefers-reduced-motion: reduce) {
+  .ticker-content {
+    display: block !important;
+    width: auto !important;
+    animation: none !important;
+    padding-left: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .ticker-seg {
+    padding-right: 0 !important;
+  }
+
+  .ticker-seg[aria-hidden="true"] {
+    display: none !important;
+  }
+}
+
+/* ---- 11. VOICE ASSISTANT (VOICE_CARD_R126) ------------------
+ * Two fixes for AIVoiceAssistant.jsx, which cannot be edited
+ * directly: at 26,470 bytes it is over the whole-file push
+ * ceiling.
+ *
+ * WHY EVERY RULE HERE IS !important
+ * That component builds its entire appearance in a <style> block
+ * rendered as part of its JSX (KL#32). React inserts it into
+ * <head> at mount, which is AFTER this bundle, so at equal
+ * specificity the component wins (KL#30). Overriding it from a
+ * stylesheet requires !important regardless of how the rule is
+ * written. This is the one situation where !important is not a
+ * shortcut - it is the only mechanism available.
+ *
+ * (a) THE CARD SHADOW - the documented issue.
+ * .ksv-card declared:
+ *   box-shadow: 8px 8px 24px rgba(0,0,0,.6),
+ *              -6px -6px 18px rgba(255,255,255,.03)
+ * An offset dark shadow plus an inverted light one is
+ * claymorphism - the style this app moved away from. Every other
+ * surface uses one soft downward shadow and a hairline border.
+ * The modal is the largest surface in the app when open, so it
+ * was also the most visible exception.
+ *
+ * (b) TOUCH TARGETS - not on the issue list; found by reading.
+ * .ksv-close is 32x32 and .ksv-lang is 28px tall. Section 6
+ * above sets a 44px floor below 600px, but it selects .btn and
+ * the input classes; these bespoke class names are invisible to
+ * it. So the floor that exists for exactly this reason has never
+ * applied to the language switcher or the close button of a
+ * full-screen modal - two of the most-tapped controls in the
+ * component, on a phone, for an audience that is almost entirely
+ * on phones.
+ *
+ * .ksv-chip is a real control too: tapping it sends a question to
+ * the AI. It was declared at min-height 40px, so it is close, but
+ * it belongs on the same floor.
+ *
+ * Only the mobile floor is raised. On desktop 32px with a mouse
+ * is fine, and forcing 44px would leave the pill group looking
+ * oversized against a 17px title.
+ *
+ * DELIBERATELY NOT TOUCHED
+ * .ksv-fab keeps its claymorphic double shadow. The ksvFabPulse
+ * keyframes animate box-shadow to draw the expanding ring, and an
+ * !important declaration outranks an animated value, so an
+ * override here would silently stop the pulse - the same class of
+ * mistake as KL#41. Flattening the FAB means rewriting those
+ * keyframes inside the component.
+ *
+ * The orb keeps its coloured glows (green listening, purple
+ * speaking, amber thinking). Those are the only indication of
+ * what the assistant is doing, so they are status, not
+ * decoration.
+ *
+ * This makes the card consistent with the rest of the app. It
+ * does NOT make the component internally consistent - gradient
+ * buttons, an inset-shadowed orb and a gradient-clipped title are
+ * all still claymorphic. That needs the component split first. */
+.ksv-card {
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.42) !important;
+  border: 1px solid var(--ds-line, rgba(255, 255, 255, 0.08)) !important;
+}
+
+@media (max-width: 600px) {
+  .ksv-close {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .ksv-lang {
+    min-height: 40px !important;
+  }
+
+  .ksv-chip {
+    min-height: 44px !important;
+  }
+}
+
+/* ---- 12. SURFACE TOKEN UNIFICATION (SURFACE_TOKENS_R127) ----
+ * The owner's report: removing claymorphism left elements
+ * conflicting with each other. Correct, and the cause is a
+ * cascade accident, not a leftover clay rule.
+ *
+ * WHAT HAPPENED
+ * ds-tokens.css (R95/R96) handled claymorphism properly. It could
+ * not delete the clay tokens, because six components write
+ * var(--clay-surface) inside inline styles and injected <style>
+ * blocks where no stylesheet edit reaches them - SettingsModal,
+ * ProfileModal, AuthModal, AIVoiceAssistant, SidebarDrawer and
+ * App. So it re-pointed them onto the design system instead:
+ *   --clay-surface: var(--ds-surface)
+ * That was the right call. But redesign2.css loads AFTER it and
+ * re-declares the same names in :root with R88's deeper palette
+ * (--surface / --clay-surface: #0a0d0b). Equal specificity, later
+ * file, so redesign2 wins (KL#30) - and it does NOT redeclare
+ * --s1/--s2/--s3, which still resolve to the design system.
+ *
+ * Dark mode therefore ran TWO surface scales at once:
+ *   --s1                       #121815   <- .card
+ *   --surface / --clay-surface #0a0d0b   <- eight other surfaces
+ * The voice modal, sidebar drawer, install prompt, profile
+ * read-only fields, auth terms box, settings modal boxes and
+ * .home-hero all rendered a different tone from the cards beside
+ * them. One surface tone is the whole design thesis; there were
+ * quietly two, which is exactly the "conflicted elements" report.
+ *
+ * CONTRAST MODE WAS WORSE
+ * ds-tokens sets every --ds-* surface to #000 under
+ * html.contrast, but nothing redeclared --clay-surface for that
+ * theme, so it kept #0a0d0b from redesign2's :root. The
+ * high-contrast theme - the one low-vision users switch to - has
+ * been drawing those panels off-black on pure black. R104 audit
+ * item 4, reached from the other end.
+ *
+ * THE FIX
+ * Restore ds-tokens' intent from the last sheet in the load
+ * order. All three themes are listed explicitly because of
+ * specificity, not for symmetry:
+ *   - html.contrast is (0,1,1) and must outrank redesign2's
+ *     :root at (0,1,0), which it would not do from :root here.
+ *   - html.light is (0,1,1), tying redesign2's html.light, and
+ *     wins only because this file loads later.
+ * A grouped selector list applies each selector at its own
+ * specificity, so one block covers all three correctly.
+ *
+ * NOT CHANGED, ON PURPOSE
+ * --bg keeps R88's #030504 rather than --ds-bg's #0a0d0c.
+ * Re-pointing the page background is a whole-app colour
+ * decision, not a conflict fix, and a darker canvas beneath
+ * lighter surfaces is coherent - it makes panels read as raised.
+ * --text/--t2/--t3 also keep R88's values; they differ from the
+ * --ds-text set by a hair and were not the problem.
+ *
+ * STILL OUTSTANDING (separate, documented, not fixed here)
+ * redesign2.css R91 restores liquid glass above 769px for .card,
+ * .modal-content, .header, .drawer and .home-hero only. Surfaces
+ * outside that list - .ksv-card, the shell prompts - stay opaque,
+ * so on a desktop pointer device translucent cards sit beside
+ * opaque panels. Unifying the tokens does not fix that; it needs
+ * a decision about whether glass survives at all. It affects
+ * pointer devices only, and this app is ~95% phones. */
+:root,
+html.light,
+html.contrast {
+  --surface: var(--ds-surface);
+  --surface-2: var(--ds-surface-2);
+  --clay-bg: var(--ds-bg);
+  --clay-surface: var(--ds-surface);
+  --clay-surface-2: var(--ds-surface-2);
+}
+
+/* ---- 13. SIDEBAR DRAWER (DRAWER_MOBILE_R128) ----------------
+ * SidebarDrawer.jsx injects its own <style> block, so everything
+ * here needs !important to outrank it (KL#32, as in section 11).
+ *
+ * Reading it first was worth it: .drawer-link is min-height 52px
+ * and the footer rows set inline minHeight 46, so the navigation
+ * items were already comfortable. Two real problems.
+ *
+ * (a) .drawer-close IS 40x40
+ * The close button of the primary navigation, 4px under the floor
+ * in section 6 - which never reached it, because that floor
+ * selects .btn and the input classes and this is a bespoke class
+ * name. Raised below 600px only; 40px with a mouse is fine.
+ *
+ * (b) AN INVISIBLE BLUR THAT COSTS REAL FRAMES
+ * .drawer declares, for every device:
+ *     background: var(--clay-surface);
+ *     backdrop-filter: blur(28px) saturate(180%);
+ * --clay-surface is fully OPAQUE. A backdrop-filter behind an
+ * opaque background blurs pixels that are then painted over, so
+ * the effect is not visible at all - it is pure compositing cost,
+ * paid while the panel runs a transform transition, on low-end
+ * Android, for ~95% of this app's users.
+ *
+ * This is exactly the trade-off redesign2.css R91 documented when
+ * it restored glass: blur on many surfaces is the main cause of
+ * Android scroll jank, so "mobile keeps opaque clay and only
+ * pointer devices get glass." That decision was applied to the
+ * stylesheets and never reached the drawer's own <style>.
+ *
+ * WHY 768px AND NOT 600px
+ * R91's glass block is @media (hover: hover) and
+ * (min-width: 769px), and it LISTS .drawer, giving it a
+ * translucent gradient background there. Above 769px the blur is
+ * therefore visible and must stay. Below it there is no glass to
+ * blur behind. The two rules meet exactly, with no gap.
+ *
+ * IF THE DRAWER EVER GETS A TRANSLUCENT BACKGROUND ON MOBILE,
+ * THIS RULE MUST BE REVISITED - the whole argument rests on the
+ * background being opaque.
+ *
+ * NOT CHANGED: .drawer-overlay keeps blur(6px). It sits over page
+ * content behind a 55% black scrim, so that blur IS visible and
+ * removing it would be a visual change rather than a free win.
+ * Still a full-screen blur animating on a phone, so worth a
+ * separate conversation.
+ *
+ * .drawer-link-icon stays 38px (32px inline in the footer rows):
+ * decorative containers inside a 52px row, not tap targets. */
+@media (max-width: 768px) {
+  .drawer {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .drawer-close {
+    width: 44px !important;
+    height: 44px !important;
+  }
+}
+
+/* ---- 14. AUTH LINKS + MODAL CLOSE (TOUCH_TARGETS_R129) ------
+ * Completes the sweep: all four components that inject a <style>
+ * block have now been read in full.
+ *
+ * (a) .auth-link - THE SMALLEST TARGETS IN THE APP
+ * AuthModal styles its secondary actions as a bare button:
+ *   .auth-link { background:none; border:none; font-size:12px;
+ *                padding: 4px 2px; }
+ * No .btn class, so section 6 never applied. That is roughly a
+ * 26px-tall target with almost no horizontal padding - and these
+ * are not decorative links. They are "Forgot password?", "Create
+ * account", "Resend OTP" and every "Back" step. Account recovery
+ * on a phone, through the smallest controls in the product.
+ *
+ * Below 600px they get the 44px floor, real horizontal padding
+ * and inline-flex centring so the added height wraps the label
+ * instead of sitting beneath it. Desktop keeps the inline text
+ * link, which is correct with a mouse.
+ *
+ * !important is required: AuthModal injects its stylesheet at
+ * mount, landing after this bundle (KL#32).
+ *
+ * (b) .modal-close IS 34x34 EVERYWHERE
+ * Section 4 pins it to 34x34 and section 6's list omits it, so
+ * every modal in the app has had a 34px close button on phones.
+ * This is the shared class - AuthModal, ProfileModal,
+ * SettingsModal and the rest all use it, so this is one fix for
+ * all of them.
+ *
+ * Why global.css's coarse-pointer 44px block did not already
+ * catch it: that block sets min-height, and section 4 sets an
+ * explicit height. A min-height cannot lift an element that has
+ * been given a fixed height. Worth remembering - the safety net
+ * looked present and was not.
+ *
+ * No !important here. .modal-close is declared only in imported
+ * sheets, so this file's load position is enough, and the
+ * absolute positioning ProfileModal applies inline is untouched.
+ *
+ * DELIBERATELY NOT CHANGED: the terms checkbox stays 18x18. A
+ * checkbox forced to 44px looks broken, and it does not need to
+ * be - its <label> is bound with htmlFor, so the whole "I agree
+ * to the Terms & Privacy Policy" sentence is already the target.
+ *
+ * ProfileModal needed no rules of its own: it uses .btn, .input
+ * and .modal-close throughout, so the floor plus (b) covers it. */
+@media (max-width: 600px) {
+  .auth-link {
+    display: inline-flex !important;
+    align-items: center !important;
+    min-height: 44px !important;
+    padding: 4px 8px !important;
+  }
+
+  .modal-close {
+    width: 44px;
+    height: 44px;
+  }
+}

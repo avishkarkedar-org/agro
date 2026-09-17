@@ -1,0 +1,476 @@
+/* ============================================================
+   AgroIntel - STRUCTURAL STYLESHEET (R96, 2026-07-25)
+
+   THIS FILE CONTAINS NO THEMING. Colour, elevation, radius and
+   typography live in ds-tokens.css and ds-components.css.
+
+   WHAT WAS DELETED HERE AND WHY
+   Owner: "first of all remove that claymorphism and do it acc to you."
+
+   Previously this file carried three whole design languages,
+   layered and each partly undoing the last:
+
+     R71 glassmorphism  backdrop-filter blur on ~14 surface types
+     R72                stripped that blur again on mobile, because
+                        it was the main cause of Android scroll jank
+     R74 claymorphism   "supersedes R71" - opaque clay surfaces,
+                        four-part inset/outset shadow stacks,
+                        border:none forced onto every surface,
+                        inset "pressed" shadows on inputs
+     R76 clay polish    re-enabled the ::after accent that R74 had
+                        hidden, added clay shadows to the drawer,
+                        avatars, chips and skeletons
+
+   R95 neutralised clay by re-pointing its custom properties, but
+   the rule blocks were still present and still firing. Masking is
+   not removing. They are now gone from the source.
+
+   Deleted outright: every --clay-* declaration and every rule that
+   consumed one; all backdrop-filter declarations; the animated
+   radial background blobs; the gradient-clipped text on the logo
+   and temperature; all decorative glow/pulse box-shadows.
+
+   Kept: layout, the responsive cascade, keyframes still referenced
+   by components, focus rings, safe-area insets, touch targets, the
+   bottom-sheet modal behaviour, and every utility class the 43
+   components depend on. Removing any of those would break markup,
+   not just looks.
+   ============================================================ */
+
+/* ============================================================
+   FONT_FETCH_R121 (2026-07-26) - one family removed from the
+   cold-load path. Issue 12, "two font stacks download on every
+   load".
+
+   The app was making THREE Google Fonts requests for SIX
+   families: this file (IBM Plex Sans + Plex Mono + Playfair),
+   src/index.html (Inter + Plex Mono + Playfair) and
+   redesign.css (Inter + Space Grotesk).
+
+   IBM Plex Sans was four weights of that and rendered NOWHERE.
+   redesign.css re-points --sans to Inter and loads after this
+   file, so the "IBM Plex Sans" first choice below never won; it
+   was only ever a fallback string. pwaUpdate.js already records
+   Plex Sans as "deleted from the design system in R96" - the
+   design language dropped it and only the download remained.
+   Verified by code search before removing: no farmer-app
+   component names the family. admin-panel/ does, but it has its
+   own entry point and its own font link and never loads this
+   file.
+
+   PLAYFAIR IS DELIBERATELY STILL FETCHED even though --serif now
+   resolves to Space Grotesk. FertCalc.jsx, GovtSchemes.jsx and
+   AgroIntelScan.jsx hardcode fontFamily: "Playfair Display",
+   bypassing the token, so dropping it would silently swap those
+   figures to Georgia. That is a design decision, not a perf fix.
+
+   PLEX MONO IS STILL REQUESTED IN BOTH PLACES because the two
+   requests differ: index.html asks 500;700, this file 500;600.
+   Dropping this line would lose weight 600, and mono carries
+   every digit in the app. Identical woff2 URLs are deduped by
+   the browser, so the cost is one CSS round trip, not fonts.
+   ============================================================ */
+
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Playfair+Display:wght@700;900&display=swap");
+
+/* Font stacks are structural, not theming, so they stay here.
+   --sans no longer leads with a family we do not download
+   (FONT_FETCH_R121). redesign.css overrides this to Inter; this
+   value is the safety net, so it points only at fonts that are
+   certain to exist on the device. */
+:root {
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+  --serif: "Playfair Display", Georgia, serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; padding: 0; }
+
+img, video, iframe, svg, canvas { max-width: 100%; height: auto; }
+table { table-layout: fixed; width: 100%; }
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: clip;
+  width: 100%;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+html, body, #root { width: 100%; max-width: 100%; overflow-x: clip; }
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+h1, h2, h3, h4 { font-family: var(--serif); line-height: 1.2; }
+
+/* Static background. The R71 animated radial blobs are deleted:
+   two 600-800px animated gradients are pure GPU cost on the
+   low-end Android this app targets, and read as decorative. */
+.bg-glow { position: fixed; inset: 0; pointer-events: none; z-index: 0; background: var(--bg); }
+
+/* ── Header ────────────────────────────────────────── */
+.header { position: sticky; top: 0; z-index: 100; }
+.header-inner {
+  max-width: 1560px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 60px; padding: 0 16px;
+}
+.header-right { display: flex; align-items: center; gap: 10px; }
+.logo { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.logo-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 19px; flex-shrink: 0;
+}
+.logo-name { font-size: 20px; }
+.logo-sub { font-size: 10px; margin-top: 1px; }
+.clock { text-align: right; }
+.badge { padding: 4px 10px; }
+/* .badge-live and .live-dot are INERT as of R119, which removed the
+   header Live pill from App.jsx. Left in place on purpose: per KL#34
+   a selector may be matched by markup not yet read, and deleting CSS
+   for tidiness is how R95 broke the site. Harmless if unmatched. */
+.badge-live { display: flex; align-items: center; gap: 5px; }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* Hamburger. Structural sizing only; colour comes from the DS.
+   Targeted this way because App.jsx sets inline styles on it. */
+.header-inner > div:first-child > button,
+.hamburger-btn {
+  width: 42px; height: 42px; min-width: 42px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 10px; cursor: pointer; flex-shrink: 0;
+  touch-action: manipulation;
+}
+.header-inner > div:first-child > button svg { width: 22px; height: 22px; }
+
+/* ── Layout ────────────────────────────────────────── */
+.main {
+  width: 100%; max-width: 1560px;
+  margin: 0 auto; padding: 20px 16px;
+  position: relative; z-index: 1; overflow-x: clip;
+}
+.main img, .main video, .main iframe, .main canvas,
+.main table, .main pre, .card img, .card video, .card iframe { max-width: 100%; height: auto; }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; max-width: 100%; }
+.grid > div { min-width: 0; }
+
+.card { position: relative; padding: 20px; }
+.card-hd { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 14px 18px; }
+.card-title { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.card-body { padding: 16px 18px; }
+
+/* ── Form controls (structure only) ───────────────────── */
+.input { width: 100%; padding: 10px 12px; font-family: var(--sans); font-size: 15px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+select.input {
+  appearance: none; cursor: pointer; padding-right: 34px;
+  background-repeat: no-repeat; background-position: right 12px center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%23888' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+}
+textarea.input { min-height: 84px; resize: vertical; line-height: 1.6; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 10px 18px; font-family: var(--sans); font-weight: 600; font-size: 14.5px;
+    cursor: pointer; border: none; text-decoration: none;
+  }
+  .btn-g, .btn-o, .btn-r { padding: 9px 16px; }
+.btn-sm { padding: 7px 13px; font-size: 12.5px; }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-link { background: none; border: none; padding: 0; font-family: var(--sans); font-size: 12.5px; cursor: pointer; }
+.btn-link:hover { text-decoration: underline; }
+.w100 { width: 100%; }
+
+.chip { display: inline-flex; align-items: center; padding: 4px 11px; }
+.filter-btn { background: none; border: none; cursor: pointer; padding: 5px 11px; }
+.like-btn {
+  background: none; border: none; cursor: pointer; padding: 5px 8px;
+  display: flex; align-items: center; gap: 4px; font-family: var(--sans); font-size: 12.5px;
+}
+
+.slider { -webkit-appearance: none; appearance: none; width: 100%; height: 5px; border-radius: 3px; outline: none; cursor: pointer; margin: 6px 0; }
+.slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; cursor: pointer; }
+.slider::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: none; }
+
+/* ── Feature-specific structure ──────────────────────── */
+.big-temp { font-size: 60px; line-height: 1; }
+.forecast-scroll { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.forecast-scroll::-webkit-scrollbar { display: none; }
+.fday {
+  flex: 0 0 auto; min-width: 62px; padding: 10px 8px; text-align: center; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.day-detail { padding: 14px; margin-top: 12px; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.detail-box { padding: 10px 12px; }
+
+.prog { height: 5px; border-radius: 99px; overflow: hidden; margin: 5px 0; }
+.prog-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+.ring { width: 34px; height: 34px; border-width: 2.5px; border-style: solid; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.dropzone { padding: 32px 18px; text-align: center; cursor: pointer; position: relative; }
+.upload-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.upload-btn {
+  padding: 12px; cursor: pointer; display: flex; flex-direction: column;
+  align-items: center; gap: 6px; font-family: var(--sans); font-size: 12.5px; font-weight: 500;
+}
+.upload-btn span { font-size: 22px; }
+
+.res-card { padding: 16px; position: relative; overflow: hidden; }
+.tx-item { display: flex; gap: 10px; padding: 8px 0; font-size: 13.5px; line-height: 1.6; }
+.tx-num { font-size: 11.5px; min-width: 18px; margin-top: 2px; font-weight: 600; }
+.conf-wrap { position: relative; width: 76px; height: 76px; flex-shrink: 0; }
+.conf-wrap svg { transform: rotate(-90deg); }
+.conf-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.step-bars { display: flex; gap: 5px; margin-bottom: 12px; }
+.step-bar { flex: 1; height: 3px; border-radius: 2px; }
+
+.crop-banner { padding: 12px 14px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+.crop-icon { font-size: 28px; line-height: 1; }
+.fert-box { padding: 15px; text-align: center; }
+.fert-num { font-size: 34px; line-height: 1; margin: 8px 0 4px; font-weight: 700; }
+.pest-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; cursor: pointer; }
+.pest-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.advisory { padding: 11px 14px; }
+.post-card { padding: 15px; }
+.avatar {
+  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 15px;
+}
+.mandi-row, .nav-btn { transition: background 0.15s ease; }
+.divider { height: 1px; margin: 14px 0; }
+
+/* ── Modals ────────────────────────────────────────── */
+.modal, .modal-bg, .modal-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 18px; overscroll-behavior: contain;
+}
+.modal-content { width: 100%; max-width: 440px; position: relative; overflow: hidden; }
+.modal-close {
+  width: 34px; height: 34px; border-radius: 8px; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 15px;
+}
+label { display: block; margin-top: 14px; }
+label:first-of-type { margin-top: 0; }
+
+.toast { position: fixed; bottom: 22px; right: 18px; z-index: 300; padding: 12px 16px; font-size: 13.5px; max-width: 320px; line-height: 1.5; }
+
+/* ── Language switcher / quick nav ───────────────────── */
+.lang-dropdown-btn {
+  padding: 5px 9px; font-family: var(--sans); font-size: 13px; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; gap: 4px; white-space: nowrap;
+  border-radius: 8px;
+}
+.lang-menu {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 200;
+  padding: 6px; display: flex; flex-direction: column; gap: 3px; min-width: 124px;
+}
+.lang-option {
+  background: transparent; border: none; padding: 8px 12px; border-radius: 7px;
+  font-family: var(--sans); font-size: 13px; font-weight: 600; text-align: left; cursor: pointer;
+}
+.install-btn { padding: 5px 10px; font-size: 13px; }
+.theme-toggle-btn { padding: 5px 9px; font-size: 14px; cursor: pointer; border-radius: 8px; }
+.quick-nav { padding: 6px 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.quick-nav::-webkit-scrollbar { display: none; }
+.quick-nav-btn {
+  padding: 6px 10px; cursor: pointer; display: flex; align-items: center; gap: 4px;
+  font-family: var(--sans); font-size: 11.5px; font-weight: 600; white-space: nowrap; flex-shrink: 0;
+  border-radius: 8px;
+}
+
+/* ── Ticker ────────────────────────────────────────── */
+.ticker-wrap { overflow: hidden; width: 100%; position: relative; }
+.ticker-content { display: inline-block; white-space: nowrap; padding-left: 100%; font-weight: 600; animation: ticker-scroll 50s linear infinite; }
+.ticker-content:hover { animation-play-state: paused; }
+@keyframes ticker-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+
+/* ── Skeletons ───────────────────────────────────── */
+.skel { border-radius: 6px; background-size: 200% 100%; animation: skel-shine 1.4s ease-in-out infinite; }
+@keyframes skel-shine { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.skel-line { height: 12px; margin-bottom: 8px; }
+.skel-line.w100 { width: 100%; } .skel-line.w80 { width: 80%; }
+.skel-line.w60 { width: 60%; } .skel-line.w40 { width: 40%; }
+.skel-box { height: 46px; margin-bottom: 8px; }
+.skel-card { height: 100px; border-radius: 12px; }
+
+/* ── Keyframes still referenced by components ───────────── */
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+.fade-in { animation: fade-in 0.35s ease; }
+@keyframes slide-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slide-down { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pop-in { 0% { transform: scale(0.94); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes card-enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes modal-in { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+.step-bar.active { position: relative; overflow: hidden; }
+.step-bar.active::after { content: ""; position: absolute; inset: 0; animation: shimmer 1.2s ease-in-out infinite; }
+
+/* ── Utility classes (components depend on these) ───────── */
+.mt1 { margin-top: 4px; } .mt2 { margin-top: 8px; } .mt3 { margin-top: 12px; }
+.mt4 { margin-top: 16px; } .mt5 { margin-top: 20px; }
+.mb1 { margin-bottom: 4px; } .mb2 { margin-bottom: 8px; } .mb3 { margin-bottom: 12px; }
+.flex { display: flex; } .aic { align-items: center; }
+.jcb { justify-content: space-between; } .jcc { justify-content: center; }
+.wrap { flex-wrap: wrap; }
+.gap1 { gap: 4px; } .gap2 { gap: 8px; } .gap3 { gap: 12px; } .gap4 { gap: 16px; }
+.bold { font-weight: 600; } .tc { text-align: center; }
+.xs { font-size: 12px; } .sm { font-size: 13.5px; } .lg { font-size: 17px; }
+.hide-sm { display: initial; }
+
+/* ── Google Translate (injects a banner + body offset) ──── */
+#google_translate_element, #google_translate_element_mobile {
+  position: absolute; opacity: 0; pointer-events: none; height: 0; overflow: hidden;
+}
+body { top: 0 !important; }
+html.translated-ltr body, html.translated-rtl body { top: 0 !important; }
+.goog-te-banner-frame, .skiptranslate, .goog-te-gadget,
+#goog-gt-tt, .goog-te-balloon-frame { display: none !important; }
+body > .skiptranslate { display: none !important; }
+
+/* ── Accessibility ───────────────────────────────── */
+.skip-link {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+  white-space: nowrap;
+}
+.skip-link:focus {
+  width: auto;
+  height: auto;
+  padding: 8px 16px;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+}
+
+/* ── Footer ────────────────────────────────────────── */
+.ks-footer { margin-top: 22px; padding: 20px 4px 14px; }
+.ks-footer-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; text-align: left; }
+.ks-footer-title { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 10px; }
+.ks-footer-links a { display: block; margin: 7px 0; font-size: 13.5px; text-decoration: none; }
+.ks-footer-links a:hover { text-decoration: underline; }
+.ks-social { display: flex; flex-direction: column; align-items: flex-start; gap: 0; }
+.ks-social-row { display: flex; align-items: center; gap: 9px; padding: 4px 0; font-size: 13.5px; text-decoration: none; }
+.ks-footer-bottom { margin-top: 18px; font-size: 12px; text-align: left; }
+@media (max-width: 720px) { .ks-footer-grid { grid-template-columns: 1fr; gap: 18px; } }
+
+/* ══ RESPONSIVE ═══════════════════════════════════ */
+@media (min-width: 700px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1100px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; } }
+@media (min-width: 1600px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+@media (min-width: 769px) {
+  .header-inner { height: 64px; padding: 0 28px; }
+  .logo-icon { width: 40px; height: 40px; font-size: 21px; }
+  .logo-name { font-size: 22px; }
+  .main { padding: 26px 28px; }
+  .card-hd { padding: 16px 22px; }
+  .card-body { padding: 18px 22px; }
+  .big-temp { font-size: 68px; }
+  .fday { min-width: 70px; padding: 12px 10px; }
+  .avatar { width: 40px; height: 40px; font-size: 17px; }
+  .dropzone { padding: 38px 22px; }
+}
+
+@media (max-width: 768px) {
+  .main { max-width: 100%; padding: 16px 14px; }
+  .card-hd { padding: 13px 15px; }
+  .card-body { padding: 15px; overflow-x: clip; }
+  .big-temp { font-size: 48px; }
+  .forecast-scroll { gap: 4px; }
+  .fday { min-width: 54px; padding: 8px 6px; }
+  .toast { right: 10px; left: 10px; max-width: none; bottom: 14px; }
+  .modal, .modal-bg, .modal-overlay { padding: 12px; }
+  button, .btn, a.btn, [role="button"], .drawer-link { min-height: 44px; }
+  .theme-toggle-btn, .icon-btn, .install-btn { min-width: 44px; min-height: 44px; }
+}
+
+@media (max-width: 600px) {
+  .hide-sm { display: none; }
+  .header-inner { height: 56px; padding: 0 12px; }
+  .logo-name { font-size: 17px; }
+  .logo-icon { width: 32px; height: 32px; font-size: 16px; }
+  .logo-sub { display: none; }
+  .header-right { gap: 6px; }
+  .big-temp { font-size: 42px; }
+  .fert-num { font-size: 26px; }
+  .conf-wrap, .conf-wrap svg { width: 62px; height: 62px; }
+  .crop-icon { font-size: 24px; }
+  .card-body { padding: 13px; }
+  .upload-options { gap: 8px; }
+
+  /* Bottom-sheet modals. Kept from R77: on a phone a centred
+     dialog with a tiny close target is worse than a sheet. */
+  .modal-overlay, .modal-bg { align-items: flex-end; padding: 0 !important; }
+  .modal-overlay > .card, .modal-bg > .card, .modal-content {
+    width: 100% !important; max-width: 100% !important;
+    border-radius: 18px 18px 0 0 !important;
+    max-height: 92vh; overflow-y: auto;
+    animation: sheet-up 0.26s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important;
+  }
+  .modal-overlay > .card, .modal-bg > .card, .modal-content { scrollbar-width: none; }
+  .modal-overlay > .card::-webkit-scrollbar,
+  .modal-bg > .card::-webkit-scrollbar,
+  .modal-content::-webkit-scrollbar { display: none; }
+}
+
+@media (max-width: 400px) {
+  .header-inner { height: 52px; padding: 0 10px; }
+  .logo-name { font-size: 15px; }
+  .main { padding: 12px 10px; }
+  .big-temp { font-size: 36px; }
+  .upload-options { grid-template-columns: 1fr; }
+}
+
+/* Touch devices: real 44px targets, no hover-lift repaint. */
+@media (hover: none) and (pointer: coarse) {
+  a, button, .btn, .btn-g, .btn-o, .btn-r { touch-action: manipulation; min-height: 44px; }
+  .btn-sm, .filter-btn, .lang-dropdown-btn, .theme-toggle-btn, .install-btn { min-height: 44px; }
+  .modal-close { width: 44px; height: 44px; font-size: 18px; }
+  .like-btn { min-height: 44px; min-width: 44px; }
+  .lang-option { min-height: 44px; display: flex; align-items: center; }
+  select.input, input.input, textarea.input { min-height: 44px; }
+  .btn, .btn-g, .btn-o, .btn-r, .btn-sm, .quick-nav-btn, .filter-btn,
+  .lang-dropdown-btn, .lang-option, .theme-toggle-btn, .install-btn,
+  .upload-btn, .modal-close, .like-btn, .chip, .fday {
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  }
+  .fday:active, .pest-item:active, .quick-nav-btn:active,
+  .lang-option:active, .filter-btn:active, .upload-btn:active { transform: scale(0.98); }
+}
+
+@supports (padding: env(safe-area-inset-bottom)) {
+  @media (max-width: 768px) {
+    .toast { bottom: calc(14px + env(safe-area-inset-bottom)); }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,235 @@
+/* ============================================================
+   R95/R96 - DESIGN SYSTEM: TOKEN LAYER
+
+   Owner: "I want a complete professional redesign, not just
+   doing some changes" / "first of all remove that claymorphism
+   and do it acc to you."
+
+   WHY THIS FILE EXISTS
+   The app was loading five stylesheets carrying twelve numbered
+   revisions that contradicted each other:
+
+     global.css     R71 glassmorphism
+                    R72 stripped that blur again on mobile
+                    R74 claymorphism (superseded R71)
+                    R76 clay polish (re-enabled what R74 hid)
+                    R78 full-width, R79 tap targets
+     redesign.css   R81 flat editorial (removed clay)
+                    R82 token remap, R83, R85, R86
+     redesign2.css  R91 glass (re-added what R81 removed)
+     redesign3.css  R91.1 repaired R91, R91.2, R92.2, R93
+     redesign4.css  R94
+
+   Three mutually exclusive design languages - glass, clay and
+   flat editorial - were all present at once, each partially
+   undone by the next. That contradiction, not any single rule,
+   is why the UI looked unfinished no matter what was patched on
+   top. R96 deleted the clay and glass blocks from global.css
+   outright; the four redesign*.css files are no longer loaded.
+
+   THE APPROACH
+   Components across all 43 files already consume shared custom
+   properties (--bg, --text, --green, --s1, --clay-surface...).
+   Rather than restyling components one by one, this file
+   REDEFINES those tokens as one coherent system, so every
+   component inherits the new look automatically.
+
+   Legacy token names are kept and re-pointed rather than renamed.
+   Renaming would require editing every component that reads them;
+   re-pointing is one safe file that cannot break a build.
+   ============================================================ */
+
+/* ---------- Canonical scale ---------- */
+:root {
+  --ds-bg: #0a0d0c;
+  --ds-surface: #121815;
+  --ds-surface-2: #182019;
+  --ds-surface-3: #1e2823;
+
+  --ds-line: rgba(255, 255, 255, 0.08);
+  --ds-line-2: rgba(255, 255, 255, 0.14);
+
+  --ds-text: #eef2ef;
+  --ds-text-2: rgba(238, 242, 239, 0.74);
+  --ds-text-3: rgba(238, 242, 239, 0.56);
+
+  /* Brand - one green, used sparingly, AA on --ds-surface */
+  --ds-accent: #34d399;
+  --ds-accent-2: #10b981;
+  --ds-accent-soft: rgba(52, 211, 153, 0.12);
+  --ds-accent-line: rgba(52, 211, 153, 0.26);
+
+  --ds-warn: #fbbf24;
+  --ds-warn-soft: rgba(251, 191, 36, 0.12);
+  --ds-danger: #fb7185;
+  --ds-danger-soft: rgba(251, 113, 133, 0.12);
+  --ds-info: #60a5fa;
+  --ds-info-soft: rgba(96, 165, 250, 0.12);
+
+  /* Radii - one family, replacing the old 12/14/16/18/20/22/26 mix */
+  --ds-r-sm: 8px;
+  --ds-r: 14px;
+  --ds-r-lg: 18px;
+  --ds-r-pill: 999px;
+
+  /* Elevation - subtle and layered, not clay, not neon */
+  --ds-sh-1: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --ds-sh-2: 0 4px 16px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  --ds-sh-3: 0 14px 38px rgba(0, 0, 0, 0.46);
+  --ds-focus: 0 0 0 3px rgba(52, 211, 153, 0.34);
+
+  --ds-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ---------- Light theme ----------
+   Light mode was previously white cards on a white canvas with no
+   depth cue, which is what made it look washed out. It now gets a
+   faint green-grey canvas so white surfaces read as raised. */
+html.light {
+  --ds-bg: #f3f5f4;
+  --ds-surface: #ffffff;
+  --ds-surface-2: #f8faf9;
+  --ds-surface-3: #eff2f0;
+
+  --ds-line: rgba(13, 27, 20, 0.08);
+  --ds-line-2: rgba(13, 27, 20, 0.14);
+
+  --ds-text: #111a15;
+  --ds-text-2: rgba(17, 26, 21, 0.7);
+  --ds-text-3: rgba(17, 26, 21, 0.5);
+
+  /* WCAG_CONTRAST_R152: #0f8a4d on a white surface measures ~4.40:1, just
+     under the 4.5:1 AA minimum for normal text - and this token (aliased to
+     --green) is used as literal text color in many places (links, chip text,
+     borders doubling as labels) on white/near-white surfaces, not just for
+     large UI accents. Darkened to the shade that was already the hover/active
+     tone (~6.25:1 on white, comfortably AA); the hover tone below is darkened
+     to match so the two states stay visually distinct from each other. */
+  --ds-accent: #0b6f3e;
+  --ds-accent-2: #095c33;
+  --ds-accent-soft: rgba(11, 111, 62, 0.10);
+  --ds-accent-line: rgba(11, 111, 62, 0.22);
+
+  --ds-warn: #b45309;
+  --ds-warn-soft: rgba(180, 83, 9, 0.10);
+  --ds-danger: #be123c;
+  --ds-danger-soft: rgba(190, 18, 60, 0.09);
+  --ds-info: #1d4ed8;
+  --ds-info-soft: rgba(29, 78, 216, 0.09);
+
+  --ds-sh-1: 0 1px 2px rgba(13, 27, 20, 0.06);
+  --ds-sh-2: 0 4px 14px rgba(13, 27, 20, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --ds-sh-3: 0 14px 34px rgba(13, 27, 20, 0.12);
+}
+
+/* ============================================================
+   LEGACY TOKEN BRIDGE
+   Every custom property the 43 components already read, mapped
+   onto the scale above. This is what lets one file restyle the
+   whole app without touching a single component.
+
+   R96.2: the radius aliases below are NOT cosmetic. --r-sm and
+   --r-md were declared only in redesign.css, which R95 removed
+   from the load order. ProfileModal.jsx reads var(--r-sm) with NO
+   fallback, so it was resolving to an invalid value and dropping
+   the declaration entirely. AuthModal.jsx happened to write
+   var(--r-sm, 12px) and survived. Found by code search, not by
+   looking - which is exactly why unloading a stylesheet requires
+   auditing consumers of every variable it declared.
+   ============================================================ */
+:root,
+html.light {
+  --bg: var(--ds-bg);
+  --text: var(--ds-text);
+  --t2: var(--ds-text-2);
+  --t3: var(--ds-text-3);
+
+  --s1: var(--ds-surface);
+  --s2: var(--ds-surface-2);
+  --s3: var(--ds-surface-3);
+  --surface: var(--ds-surface);
+  --surface-2: var(--ds-surface-2);
+
+  --b1: var(--ds-line);
+  --b2: var(--ds-line-2);
+  --line: var(--ds-line);
+  --line-strong: var(--ds-line-2);
+  --border-soft: 1px solid var(--ds-line);
+
+  --green: var(--ds-accent);
+  --g2: var(--ds-accent-2);
+  --g3: var(--ds-accent-2);
+  --gdim: var(--ds-accent-soft);
+
+  --amber: var(--ds-warn);
+  --adim: var(--ds-warn-soft);
+  --red: var(--ds-danger);
+  --rdim: var(--ds-danger-soft);
+  --blue: var(--ds-info);
+  --bdim: var(--ds-info-soft);
+  --purple: #a78bfa;
+  --pdim: rgba(167, 139, 250, 0.12);
+
+  /* Radius aliases - see the R96.2 note above. */
+  --r-sm: var(--ds-r-sm);
+  --r-md: var(--ds-r);
+  --r-lg: var(--ds-r-lg);
+  --radius: var(--ds-r);
+
+  /* Shadow aliases */
+  --shadow-sm: var(--ds-sh-1);
+  --shadow-md: var(--ds-sh-2);
+  --shadow-lg: var(--ds-sh-3);
+  --shadow-soft: var(--ds-sh-2);
+  --ease-clay: var(--ds-ease);
+
+  /* Claymorphism tokens are neutralised rather than deleted.
+     The R74/R76 rule blocks are gone from global.css, but six
+     components still write var(--clay-surface) or
+     var(--clay-surface-2) in inline styles and injected <style>
+     blocks: SettingsModal, ProfileModal, AuthModal,
+     AIVoiceAssistant, SidebarDrawer and App itself. Re-pointing
+     is safer than editing six files. */
+  --clay-bg: var(--ds-bg);
+  --clay-surface: var(--ds-surface);
+  --clay-surface-2: var(--ds-surface-2);
+  --clay-radius: var(--ds-r);
+  --clay-shadow: var(--ds-sh-2);
+  --clay-shadow-sm: var(--ds-sh-1);
+  --clay-green: linear-gradient(180deg, var(--ds-accent), var(--ds-accent-2));
+  --clay-accent: var(--ds-accent);
+  --clay-accent-2: var(--ds-accent-2);
+  --clay-ring: var(--ds-focus);
+
+  /* Glass tokens from R71/R91 - retired. Blur is opt-in per
+     surface in the component layer, never a global default: a
+     global blur was the documented cause of Android scroll jank. */
+  --glass-blur: none;
+  --glass-fx: none;
+  --glass-shadow: var(--ds-sh-2);
+  --glass-border: 1px solid var(--ds-line);
+  --glass-inner: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+  --inner-fill: var(--ds-surface-2);
+  --inner-fill-2: var(--ds-surface-3);
+}
+
+/* ---------- High contrast ---------- */
+html.contrast {
+  --ds-bg: #000000;
+  --ds-surface: #000000;
+  --ds-surface-2: #0d0d0d;
+  --ds-surface-3: #141414;
+  --ds-text: #ffffff;
+  --ds-text-2: #f2f2f2;
+  --ds-text-3: #e2e2e2;
+  --ds-line: #ffffff;
+  --ds-line-2: #ffffff;
+  --ds-accent: #4ade80;
+  --ds-sh-1: none;
+  --ds-sh-2: none;
+  --ds-sh-3: none;
+}
+
+:root { color-scheme: dark; accent-color: var(--ds-accent); }
+html.light { color-scheme: light; }

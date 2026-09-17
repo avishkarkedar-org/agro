@@ -1,0 +1,274 @@
+================================================================================
+                           AGROINTEL PLATFORM
+             Comprehensive Technical Architecture & System Documentation
+================================================================================
+Platform: AgroIntel (Smart Agriculture Decision Support & Community System)
+Repository: avishkarkedar-org/AgroIntel
+Last Updated: August 2026
+
+--------------------------------------------------------------------------------
+TABLE OF CONTENTS
+--------------------------------------------------------------------------------
+1. Executive Summary & Purpose
+2. Core Architecture & System Flow
+3. Technology Stack Breakdown
+4. Third-Party Integrations & External APIs
+5. Client-Facing Feature Overview
+6. Admin Panel Architecture & Management Features
+7. Security, Authentication & Rate Limiting System
+8. Database Schema & Entity Relationships
+9. Deployment & Infrastructure Pipeline
+
+================================================================================
+1. EXECUTIVE SUMMARY & PURPOSE
+================================================================================
+AgroIntel is an advanced, production-grade, AI-powered agricultural intelligence
+platform designed specifically for Indian farmers, agronomy extension workers,
+and rural agribusinesses. The platform bridges the digital divide in rural India
+by delivering real-time agronomic insights, multilingual voice assistance,
+computer-vision crop disease diagnosis, localized weather & mandi market trends,
+government scheme access, and a peer-to-peer farmer community.
+
+Key Highlights:
+- 100% Offline-Resilient & PWA Capable (Fast caching via Workbox).
+- Multilingual First (Full native support for English, Hindi, and Marathi).
+- Multimodal AI System (DeepSeek/Llama-3.3 LLM streaming, Groq Vision models).
+- Zero-Maintenance Overhead (Automated rate limit syncing, background metrics).
+
+================================================================================
+2. CORE ARCHITECTURE & SYSTEM FLOW
+================================================================================
+The AgroIntel ecosystem consists of three interconnected subsystems:
+
+                     +---------------------------------------+
+                     |         FARMER / USER FRONTEND        |
+                     |   (React 19 + Vite + PWA + Context)   |
+                     +-------------------+-------------------+
+                                         |
+                                         | HTTPS / WebSockets
+                                         v
+                     +---------------------------------------+
+                     |           FASTAPI BACKEND             |
+                     |  (Python 3.12 + Uvicorn + Pydantic)   |
+                     +---+---------------+---------------+---+
+                         |               |               |
+        +----------------+               |               +----------------+
+        |                                |                                |
+        v                                v                                v
++----------------+              +----------------+              +----------------+
+|  GROQ AI CLOUD |              | SUPABASE POSTGRES |           |  EXTERNAL APIS |
+| LLM & Vision   |              | Auth, Data, Logs  |           | Open-Meteo,    |
+| (Llama 3.3 70B)|              | & RPC Functions   |           | OSM Nominatim, |
++----------------+              +----------------+              | Wikipedia, APMC|
+                                         ^                      +----------------+
+                                         |
+                     +-------------------+-------------------+
+                     |           ADMIN DASHBOARD             |
+                     |      (React 19 + Vite + Lucide)       |
+                     +---------------------------------------+
+
+Communication Flow:
+1. Client hydration: The browser loads from service worker cache, then syncs
+   dynamic settings from `/api/settings` using the `SettingsContext`.
+2. AI Queries: Audio/Text requests hit `/api/chat` or `/api/scan`. The backend
+   sanitizes inputs, constructs date/weather/mandi context, executes Groq AI
+   with fallback chains, strips reasoning `<think>` tokens, and streams chunks.
+3. Community & Market: Posts, likes, and prices sync via Supabase PostgreSQL with
+   atomic RPC operations (e.g., `increment_post_likes`) avoiding race conditions.
+4. Admin Control: The admin panel updates settings via `/api/admin/*`, which
+   immediately propogates to the frontend via periodic polling (60s) or focus events.
+
+================================================================================
+3. TECHNOLOGY STACK BREAKDOWN
+================================================================================
+A. User Client Frontend:
+   - Framework: React 19.x (Modern JSX, Hooks, React Compiler purity compliant)
+   - Bundler: Vite 8.0+
+   - State Management: React Context (`SettingsContext`), LocalStorage Persistence
+   - Data Visualization: Recharts (Responsive Line & Cartesian Charts)
+   - Icons: Lucide React (Micro-optimized tree-shakable SVG icons)
+   - PWA: Vite-Plugin-PWA with Workbox service workers for offline caching
+   - Styling: Pure CSS3 Design System with CSS variables, high-contrast dark/light theme
+
+B. Admin Panel Frontend:
+   - Framework: React 19.x with Vite
+   - Routing: React Router DOM (Declarative SPA routing with auth guard)
+   - State Management: Modular API clients with automatic JWT header injection
+   - Design: Dedicated high-density dark admin theme with analytics widgets
+
+C. Backend API Engine:
+   - Framework: FastAPI 0.115+ (High-performance async Python framework)
+   - ASGI Server: Uvicorn with async event loops
+   - Validation: Pydantic v2 (Strict schema validation & serialization)
+   - HTTP Client: HTTPX (Async connection pooling for AI and third-party APIs)
+   - Security: PyJWT (HS256 tokens), Passlib/Bcrypt (Salted password hashing)
+   - Scheduling: Asyncio background tasks & APScheduler
+   - Logging: Python JSON Logger (Structured observability)
+
+D. Database & Storage:
+   - Database: Supabase PostgreSQL
+   - Connection: Python `supabase` SDK + Direct PostgreSQL RPCs
+   - Auth: Supabase Auth + Custom Admin RBAC (Superadmin, Admin)
+   - Row-Level Security (RLS) & RPCs for thread-safe counters
+
+================================================================================
+4. THIRD-PARTY INTEGRATIONS & EXTERNAL APIS
+================================================================================
+1. Groq Cloud AI Engine:
+   - Primary Text LLM: `llama-3.3-70b-versatile` (Fast, high-reasoning output)
+   - Text Fallback: `openai/gpt-oss-20b` (Automatic quota failover)
+   - Vision Engine: `llama-3.2-11b-vision-preview` (Plant pathology diagnosis)
+   - Feature: Real-time SSE streaming with `<think>` tag stripper state-machine.
+
+2. Open-Meteo Weather API:
+   - Endpoints: Temperature, Relative Humidity, Precipitation, Wind Speed, UV Index
+   - Soil Moisture: 0-7cm, 7-28cm root-zone depth moisture tracking
+   - Spray Window: Real-time wind/rain suitability calculations for pesticide spraying
+
+3. OpenStreetMap Nominatim:
+   - Reverse & Forward Geocoding: Resolves GPS coordinates to taluka/district names
+   - Strict User-Agent enforcement and connection pooling
+
+4. Wikipedia MediaWiki API:
+   - Live Plant Encyclopedia: Dynamic queries for botanical taxonomy, pathogen
+     origins, and organic disease controls
+
+5. Government Mandi Feeds (Data.gov.in / Agmarknet):
+   - Daily modal prices across APMC mandis in Maharashtra and pan-India
+
+================================================================================
+5. CLIENT-FACING FEATURE OVERVIEW
+================================================================================
+1. AI Voice Assistant:
+   - Voice-in, Voice-out conversational AI in English, Hindi, and Marathi.
+   - Live context injection (current day, time, local weather, and mandi prices).
+   - Sentence-boundary TTS chunking for ultra-low latency speech playback.
+
+2. AgroIntel Crop Doctor (Disease Scanner):
+   - Upload or capture photo of diseased leaves/stems.
+   - Analyzes symptoms, identifies pathogens (fungal, bacterial, viral, nutrient deficiency).
+   - Provides 3-tier action plan: Organic treatment, Chemical control, and Prevention.
+
+3. Farmer Community Forum:
+   - Community question posting, image attachments, and categorized discussions.
+   - Reply threads, upvoting with atomic RPC locks, and verified expert badges.
+   - Ownership guards ensuring users can only edit or delete their own posts.
+
+4. Real-Time Mandi Market:
+   - Track live crop prices across major agricultural markets.
+   - Filter by commodity (Wheat, Soybean, Cotton, Onion, Tomato, Rice, Maize).
+   - Search by state and district APMCs.
+
+5. Weather & Microclimate Station:
+   - 7-day temperature forecasts and hourly precipitation charts.
+   - Crop Health Index, Soil Moisture depth readings, and safe spraying window advisories.
+   - Local diesel & petrol prices for agricultural transport calculations.
+
+6. Fertilizer & Yield Calculators:
+   - Fertilizer dosage calculator (Urea, DAP, MOP requirements based on acreage).
+   - ICAR-standard nutrient baselines across cereals, pulses, cash crops, and horticulture.
+   - Crop Yield Estimator based on land size, seed variety, and irrigation method.
+
+7. Crop Calendar & Pest Almanac:
+   - Month-by-month agronomic timetable (sowing, irrigation, weeding, harvest).
+   - Pest incidence calendar with IPM (Integrated Pest Management) chemical dosages.
+
+8. Government Schemes Directory:
+   - Exhaustive database of Central (PM-KISAN, PMFBY, KCC, PKVY, PM-KUSUM) and
+     State schemes (Namo Shetkari, Magel Tyala Shet Tale, Birsa Munda Krishi).
+   - Direct application portal links, eligibility checker, and document checklists.
+
+9. Soil Health & Crop Rotation Planner:
+   - Legume-cereal rotation advice, green manuring strategies, cover crop pairings.
+
+10. Local KVK Directory:
+    - Verified contact details for Krishi Vigyan Kendras across all districts.
+
+11. AgroIntel Ledger:
+    - Offline-first personal farm expense and revenue bookkeeping.
+
+12. KrishiShare Equipment Rental:
+    - Community machinery and implement rental marketplace.
+
+================================================================================
+6. ADMIN PANEL ARCHITECTURE & MANAGEMENT FEATURES
+================================================================================
+Access: Dedicated `/admin-panel` sub-application with JWT authentication.
+
+Admin Modules:
+1. Dashboard:
+   - High-level KPIs: Active users, total posts, scans executed, visitor analytics.
+   - Maintenance mode global emergency toggle.
+   - CSV export for audit logs and visitor telemetry.
+
+2. Announcements & Banners:
+   - Publish site-wide top bar notices, rich announcements, and promotional images.
+   - Start and End date scheduling for automated campaign lifecycles.
+
+3. Feature Access & Kill-Switches:
+   - Granular feature lockout (Require login for Voice Assistant, Crop Scanner, Community).
+   - Instant kill-switch to disable buggy or high-traffic features without redeployment.
+
+4. Rate Limit Configurator:
+   - Adjust global request thresholds (`max_req`, `window`) on the fly.
+   - Live metrics on top hit endpoints and rate-limit health.
+
+5. Market & Price Management:
+   - Override mandi prices and configure local fuel price tickers.
+
+6. AI Prompt & Persona Studio:
+   - Customize AI persona (friendly, professional, concise).
+   - Configure strict agricultural topic enforcement and custom admin context injection.
+
+7. Community Moderation:
+   - Delete abusive posts, ban spammer IPs, and manage verified expert lists.
+
+8. Settings History & Rollback:
+   - Snapshot audit trail of every settings change with 1-click restore capability.
+
+================================================================================
+7. SECURITY, AUTHENTICATION & RATE LIMITING SYSTEM
+================================================================================
+1. Rate Limiter & IP Isolation:
+   - Per-endpoint bucketing (`{IP}_{METHOD}_{PATH}`) prevents cross-feature blocking.
+   - Automatic JWT Admin Bypass: Authenticated admins are exempt from all rate limits.
+   - Clamped bounds (minimum 5 req/window, max 3600s) preventing accidental lockouts.
+   - In-memory time-decay list with atomic pruning.
+
+2. Authentication:
+   - Farmer Auth: Email OTP and phone login via Supabase Auth.
+   - Admin Auth: Custom HS256 JWT tokens with role-based claims (`admin`, `superadmin`).
+   - Session Revocation: Instant force-logout capability via Superadmin panel.
+
+3. API Security & Hardening:
+   - Strict CORS configuration.
+   - Security Headers: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
+     `Strict-Transport-Security: max-age=31536000`, conservative CSP headers.
+   - HTML sanitization (`strip_html`) on user-submitted text to prevent XSS.
+
+================================================================================
+8. DATABASE SCHEMA & ENTITY RELATIONSHIPS
+================================================================================
+Core Tables (Supabase PostgreSQL):
+- `settings`: Singleton row (id=1) holding all dynamic platform configurations.
+- `posts`: Community forum topics, images, author names, tags, and like counters.
+- `post_replies`: Discussion replies linked to post IDs.
+- `admins`: Admin credentials, hashed passwords, roles, and security policies.
+- `visitors`: Daily visitor IPs, user agents, and page impression timestamps.
+- `api_metrics`: In-memory batched API performance telemetry (latency, status codes).
+- `scan_logs`: Crop disease diagnostic logs for agronomic trend analysis.
+- `chat_logs`: Anonymized AI voice conversation logs for accuracy audits.
+- `settings_history`: Full audit trail of admin settings modifications with old values.
+- `user_bans`: IP and fingerprint blocklist with automatic expiration timestamps.
+- `audit_logs`: Administrative actions log (logins, deletions, toggles).
+
+================================================================================
+9. DEPLOYMENT & INFRASTRUCTURE PIPELINE
+================================================================================
+- Frontend Client: Cloudflare Pages / Vercel / Netlify static hosting (Vite build).
+- Admin Panel: Hosted as isolated static SPA or sub-route.
+- Backend API: Render / Docker container (FastAPI + Python 3.12).
+- Database: Managed Supabase Cloud PostgreSQL with automated backups.
+================================================================================
+                         END OF DOCUMENTATION
+================================================================================

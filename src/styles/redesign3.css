@@ -1,0 +1,418 @@
+/* ============================================================
+   R91.1: CONFLICT-REPAIR + GLASS CORRECTION LAYER (2026-07-25)
+   Imported LAST so it wins the cascade. Cosmetic only - no
+   layout mechanism, no markup, no logic. Every rule here exists
+   to repair a specific conflict found by auditing the R91 glass
+   pass in redesign2.css line-by-line against global.css
+   (R72 / R74 / R76 / R78) and redesign.css (R81 / R83 / R85 / R86).
+
+   FIX 1 - Nested glass.
+     .post-card / .res-card / .fert-box / .day-detail / .detail-box
+     all render INSIDE .card, which R91 also made glass. Stacking
+     backdrop-filter inside an already-blurred parent resolves to
+     flat grey mush, and multiplies GPU cost across 19 feature
+     cards. Nested surfaces now get a flat translucent fill and
+     NO backdrop-filter. Glass is reserved for surfaces whose
+     backdrop is the page itself.
+
+   FIX 2 - Brand accent line restored.
+     R91 repurposed .card::after as a white specular sheen, but
+     R86 defines .card:hover::after (higher specificity) with the
+     green-to-amber brand line. Result: white at rest, green on
+     hover - a visible flicker. The accent line is restored here
+     and the sheen is dropped rather than moved to ::before, because
+     an inset ::before with z-index auto paints ABOVE the card's
+     in-flow text and would wash it out in light mode.
+
+   FIX 3 - Toast accent restored.
+     R81 gives .toast a 3px left accent bar. The R91 border
+     shorthand silently erased it.
+
+   FIX 4 - Graceful degradation.
+     Browsers without backdrop-filter, and users who ask for
+     reduced transparency, previously got a near-transparent panel
+     with unreadable text. Both now fall back to an opaque surface.
+     High-contrast and reduced-motion guards re-asserted last.
+   ============================================================ */
+
+/* ---------- FIX 1: nested surfaces are translucent, never blurred ---------- */
+:root {
+  --inner-fill: rgba(255, 255, 255, 0.045);
+  --inner-fill-2: rgba(255, 255, 255, 0.028);
+}
+html.light {
+  --inner-fill: rgba(255, 255, 255, 0.60);
+  --inner-fill-2: rgba(240, 246, 241, 0.72);
+}
+
+.post-card,
+.res-card,
+.fert-box,
+.day-detail {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: var(--inner-fill) !important;
+  border: 1px solid var(--line) !important;
+}
+.detail-box {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: var(--inner-fill-2) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: none !important;
+}
+
+/* ---------- FIX 2: restore the green-to-amber brand accent line ---------- */
+.card::after {
+  left: 0 !important;
+  right: 0 !important;
+  height: 2px !important;
+  background: linear-gradient(90deg, transparent, rgba(52, 211, 153, 0.5), rgba(234, 179, 8, 0.28), transparent) !important;
+}
+html.light .card::after {
+  background: linear-gradient(90deg, transparent, rgba(18, 137, 74, 0.45), rgba(180, 83, 9, 0.22), transparent) !important;
+}
+@media (hover: hover) and (min-width: 769px) {
+  .card:hover::after {
+    height: 3px !important;
+    background: linear-gradient(90deg, transparent, var(--green), var(--amber), transparent) !important;
+  }
+}
+
+/* ---------- FIX 3: toast keeps its left accent bar ---------- */
+.toast {
+  border-left: 3px solid var(--green) !important;
+}
+
+/* ---------- FIX 4: graceful degradation ---------- */
+@supports not ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
+  .card,
+  .header,
+  .drawer,
+  .modal-content,
+  .lang-menu,
+  .toast,
+  .home-hero {
+    background: var(--clay-surface) !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .card,
+  .header,
+  .drawer,
+  .modal-content,
+  .lang-menu,
+  .toast,
+  .home-hero {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: var(--clay-surface) !important;
+  }
+}
+
+html.contrast .card,
+html.contrast .header,
+html.contrast .drawer,
+html.contrast .modal-content,
+html.contrast .toast,
+html.contrast .lang-menu,
+html.contrast .home-hero,
+html.contrast .post-card,
+html.contrast .res-card,
+html.contrast .fert-box,
+html.contrast .day-detail,
+html.contrast .detail-box {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: #000 !important;
+  border: 1px solid #fff !important;
+}
+html.contrast .card::after {
+  display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .home-hero {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+
+/* ============================================================
+   R91.2: FEATURE GRID - MULTI-COLUMN TO CSS GRID (2026-07-25)
+   Suggestion #3. This REPLACES, and deliberately supersedes, the
+   R91 "columns: 4 / columns: 5" rules in redesign2.css. Those
+   rules are now inert (column-count does not apply to a grid
+   container), so both changes had to land together - shipping
+   them apart would leave wide screens stuck at 3 columns.
+
+   WHY: .grid used CSS multi-column (columns: 3). Multi-column
+   flows content top-to-bottom and THEN wraps to the next column,
+   so the 19 feature cards read 1-2-3 down the left column before
+   continuing - not left-to-right. Reading order, tab order and
+   visual order all disagreed. CSS Grid flows row-major and fixes
+   all three at once.
+
+   FAILURE MODES HANDLED:
+   - minmax(0, 1fr), not 1fr: a bare 1fr has an auto minimum, so a
+     wide table or a long unbroken string inside one card would
+     blow the track out and overflow the page. min-width: 0 on the
+     children closes the same hole one level down.
+   - align-items: start, not the default stretch: a very tall card
+     (Community with 20 posts) would otherwise inflate a short card
+     (Fuel) in the same row into a large empty box. Multi-column
+     never did that, so stretch would be a visible regression.
+   - .grid > div margin-bottom is zeroed. R82 added it to space
+     multi-column items; under grid, gap already does that, so it
+     would double the vertical rhythm.
+   - Base stays single-column so the <=768px flex-column stack in
+     global.css keeps its behaviour. The order property works
+     identically in grid and flex, so admin feature ordering is
+     unaffected.
+   ============================================================ */
+
+.grid {
+  display: grid !important;
+  columns: auto !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 18px !important;
+  align-items: start !important;
+}
+.grid > div {
+  margin-bottom: 0 !important;
+  min-width: 0 !important;
+  break-inside: auto !important;
+}
+
+@media (min-width: 700px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+@media (min-width: 1100px) {
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 20px !important; }
+}
+@media (min-width: 1600px) {
+  .grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 22px !important; }
+}
+@media (min-width: 2200px) {
+  .grid { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
+}
+
+
+/* ============================================================
+   R92.2: LEGIBILITY PASS (2026-07-25)
+   Suggestions #31 (contrast) and #41 (outdoor readability).
+
+   #31 - --t3 was rgba(237,240,238,0.40) on dark and
+   rgba(13,27,20,0.42) on light. Composited against the card
+   surface those land near 3.0:1 and 2.9:1, both well under the
+   WCAG AA 4.5:1 floor for body text. --t3 carries timestamps,
+   the header date, footer labels, helper text and most secondary
+   copy, so this was the single most widespread contrast failure
+   in the app. Raised to 0.60 / 0.62, which composites to roughly
+   6.5:1 and 6.2:1 - comfortably AA, still clearly de-emphasised
+   against --text so the visual hierarchy is preserved.
+
+   High-contrast mode takes pure white, since --t3 on a #000
+   surface at any alpha below 1 is needlessly dim for the exact
+   users who enabled that mode.
+
+   #41 - base size raised to 16px. This app is used outdoors, in
+   glare, frequently on low-cost screens and frequently by users
+   over 40. 16px is the standard mobile floor and also stops iOS
+   Safari auto-zooming on focused inputs, which previously shifted
+   the whole layout whenever a farmer tapped a field.
+
+   Only the smallest known offenders are nudged here. The rest of
+   the type scale is left alone deliberately: a blanket rem-based
+   rescale would risk overflow in the denser cards and cannot be
+   verified without a full visual pass.
+   ============================================================ */
+
+:root {
+  --t3: rgba(237, 240, 238, 0.60);
+}
+html.light {
+  --t3: rgba(13, 27, 20, 0.62);
+}
+html.contrast {
+  --t3: #ffffff;
+}
+
+body {
+  font-size: 16px;
+}
+
+.ks-footer-title {
+  font-size: 12px !important;
+}
+.ks-footer-links a {
+  font-size: 13px !important;
+}
+.ks-social-row {
+  font-size: 12px !important;
+}
+
+
+/* ============================================================
+   R93: DE-TERMINAL PASS (2026-07-25)
+   Owner feedback on the live mobile build: "looking ugly, you
+   removed icons, doesn't look good."
+
+   Root cause of the terminal look: .card-title is styled to
+   uppercase monospace green in an earlier layer. The COMPONENTS
+   do not do this - KVKDirectory renders the plain string
+   "Local Expert Directory (KVK)" in natural sentence case, yet it
+   paints as all-caps mono. So the whole effect is CSS-applied and
+   can be undone from CSS, with zero component edits, zero new
+   imports, and therefore no way to trip the CI guard job.
+
+   BUG (not taste) - the header was see-through.
+   The seasonal banner text was visibly ghosting THROUGH the
+   header while scrolling. R91 gave .header a translucent tint
+   plus backdrop blur, but that blur is wrapped in
+   @media (min-width: 769px), and on mobile R74 additionally sets
+   backdrop-filter: none !important. Net result on a phone:
+   a translucent bar with nothing blurring behind it, so page
+   content scrolls straight through the logo and clock. Mobile now
+   gets a near-opaque header. Desktop keeps its real glass.
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .header {
+    background: rgba(10, 12, 11, 0.97) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-bottom: 1px solid var(--line) !important;
+  }
+  html.light .header {
+    background: rgba(245, 248, 245, 0.98) !important;
+  }
+  html.contrast .header {
+    background: #000 !important;
+  }
+}
+
+/* ---------- Card titles: terminal mono -> editorial sans ----------
+   Uppercase mono is hostile to the Devanagari and Marathi strings
+   this app renders: text-transform has no meaningful uppercase
+   mapping for those scripts, and a mono face has no Devanagari
+   coverage at all, so those titles were silently falling back to
+   a mismatched fallback font. Sentence-case sans fixes the Latin
+   look AND the Indic rendering in one move. */
+.card-title {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 9px !important;
+  min-width: 0 !important;
+  font-family: var(--sans) !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+  letter-spacing: -0.01em !important;
+  color: var(--text) !important;
+}
+
+.card-hd {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  flex-wrap: wrap !important;
+  padding-bottom: 12px !important;
+}
+
+/* ---------- Icons restored, as tinted chips ----------
+   Delivered through ::before on the title rather than by editing
+   19 components. FeatureGrid already wraps every feature in a
+   div carrying a stable #sec-* id, which gives a reliable hook.
+
+   Emoji are written as CSS unicode escapes (\01F331) and never as
+   literal characters. Literal multi-byte glyphs have been
+   corrupted before when pushed through whole-file writes (this is
+   the same failure that mangled the Devanagari strings), and an
+   escape is immune to that entire class of bug.
+
+   A neutral default chip is set first so that any feature added
+   later still gets a sensible icon instead of an empty box. */
+.card-title::before {
+  content: "\01F331";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 27px;
+  height: 27px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1;
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.22);
+}
+html.light .card-title::before {
+  background: rgba(18, 137, 74, 0.10);
+  border-color: rgba(18, 137, 74, 0.24);
+}
+
+#sec-scan        .card-title::before { content: "\01F52C"; }
+#sec-planner     .card-title::before { content: "\01F4CB"; }
+#sec-weather     .card-title::before { content: "\026C5";  }
+#sec-mandi       .card-title::before { content: "\01F4B0"; }
+#sec-fert        .card-title::before { content: "\01F9EA"; }
+#sec-pest        .card-title::before { content: "\01F41B"; }
+#sec-community   .card-title::before { content: "\01F465"; }
+#sec-market      .card-title::before { content: "\01F6D2"; }
+#sec-schemes     .card-title::before { content: "\01F4DC"; }
+#sec-yield       .card-title::before { content: "\01F4CA"; }
+#sec-encyclopedia .card-title::before { content: "\01F4D6"; }
+#sec-video       .card-title::before { content: "\01F4FA"; }
+#sec-kvk         .card-title::before { content: "\01F4DE"; }
+#sec-rentals     .card-title::before { content: "\01F69C"; }
+#sec-soil        .card-title::before { content: "\01F331"; }
+#sec-calendar    .card-title::before { content: "\01F4C5"; }
+#sec-seasonal    .card-title::before { content: "\01F33E"; }
+#sec-ledger      .card-title::before { content: "\01F4D2"; }
+#sec-fert-tracker .card-title::before { content: "\01F4C8"; }
+
+/* ---------- Card depth ----------
+   In the screenshot the cards and the page background were both
+   near-black with a hairline border, so the dashboard read as one
+   flat sheet. A soft drop shadow plus a 1px inner top highlight
+   separates the card from the page without reintroducing the
+   claymorphism that was deliberately removed in R81. */
+.card {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 10px 28px rgba(0, 0, 0, 0.34) !important;
+}
+html.light .card {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 6px 18px rgba(13, 27, 20, 0.09) !important;
+}
+html.contrast .card {
+  box-shadow: none !important;
+}
+
+/* ---------- Floating action button clearance ----------
+   The assistant FAB sits bottom-right and was overlapping the
+   weather city input. Padding the scroll container is the correct
+   fix rather than moving the FAB, because the collision happens
+   with whatever lands last in the flow, not specifically weather. */
+.main {
+  padding-bottom: 96px !important;
+}
+
+/* ---------- Long values must ellipsize, never clip ----------
+   The location chip rendered "Pune, Maharashtra, Indi" hard-cut
+   mid-word against its border. */
+.card-hd .chip,
+.card-hd select,
+.chip {
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}

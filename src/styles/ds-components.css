@@ -1,0 +1,457 @@
+/* ============================================================
+   R95/R96 - DESIGN SYSTEM: COMPONENT LAYER
+
+   Load order: global.css (structure) -> ds-tokens.css -> this.
+   This is the ONLY file that should carry visual styling.
+
+   Design language: quiet editorial. One surface tone, hairline
+   borders, one restrained shadow, green reserved for action and
+   status. No clay, no glass, no glow. Depth comes from surface
+   elevation and a 1px border, not from ornament. Deliberately
+   understated - a product farmers make money decisions on should
+   look like an instrument, not a toy.
+
+   !important is used throughout. Not laziness: components inject
+   their own <style> blocks at mount time, which lands AFTER these
+   imports in the cascade, so equal-specificity rules would lose.
+   ============================================================ */
+
+/* ---------- Orphaned custom properties ----------
+   These were declared in redesign.css, which R95 removed from the
+   load order. Components still consume them, so they are restored
+   here rather than by editing component files. Verified by search:
+   --border-soft is read by SidebarDrawer.jsx and was resolving to
+   nothing, silently dropping the drawer's right edge. */
+:root, html.light {
+  --border-soft: 1px solid var(--ds-line);
+  --line-strong: var(--ds-line-2);
+  --shadow-sm: var(--ds-sh-1);
+  --shadow-md: var(--ds-sh-2);
+  --shadow-lg: var(--ds-sh-3);
+  --ease-clay: var(--ds-ease);
+  --radius: var(--ds-r);
+}
+
+/* ---------- Base ---------- */
+body {
+  background: var(--ds-bg) !important;
+  color: var(--ds-text) !important;
+  font-family: var(--sans) !important;
+  font-size: 16px !important;
+  line-height: 1.55 !important;
+  -webkit-font-smoothing: antialiased;
+}
+.bg-glow { background: var(--ds-bg) !important; }
+.bg-glow::before, .bg-glow::after, .bg-glow-extra { display: none !important; }
+
+/* ---------- Surfaces ---------- */
+.card {
+  background: var(--ds-surface) !important;
+  border: 1px solid var(--ds-line) !important;
+  border-radius: var(--ds-r-lg) !important;
+  box-shadow: var(--ds-sh-2) !important;
+  overflow: hidden !important;
+  transition: border-color 0.2s var(--ds-ease), box-shadow 0.2s var(--ds-ease) !important;
+}
+.card::before { display: none !important; }
+.card::after {
+  display: block !important;
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important; left: 0 !important; right: 0 !important;
+  height: 1px !important;
+  background: linear-gradient(90deg, transparent, var(--ds-accent-line), transparent) !important;
+  pointer-events: none !important;
+}
+@media (hover: hover) and (min-width: 769px) {
+  .card:hover {
+    transform: none !important;
+    border-color: var(--ds-line-2) !important;
+    box-shadow: var(--ds-sh-3) !important;
+  }
+}
+html.contrast .card::after { display: none !important; }
+
+/* Nested surfaces step up one level, never repeat the card. */
+.post-card, .res-card, .fert-box, .fday, .day-detail,
+.detail-box, .pest-item, .advisory, .lang-menu, .quick-nav {
+  background: var(--ds-surface-2) !important;
+  border: 1px solid var(--ds-line) !important;
+  border-radius: var(--ds-r) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.detail-box, .pest-item { border-radius: var(--ds-r-sm) !important; }
+
+/* ---------- Card structure: kill the stacked padding ---------- */
+.card:has(> .card-hd) { padding: 0 !important; }
+.card:has(> .card-hd) > .card-hd {
+  padding: 15px 18px 12px !important;
+  border-bottom: 1px solid var(--ds-line) !important;
+}
+.card:has(> .card-hd) > .card-body { padding: 16px 18px 18px !important; }
+@media (min-width: 769px) {
+  .card:has(> .card-hd) > .card-hd { padding: 17px 22px 13px !important; }
+  .card:has(> .card-hd) > .card-body { padding: 18px 22px 22px !important; }
+}
+
+/* ---------- Typography ----------
+   Monospace is for digits only. It was previously the primary UI
+   face at 9-11px uppercased, which read as a developer console and
+   has no Devanagari coverage, breaking Hindi and Marathi. */
+.card-title {
+  font-family: var(--sans) !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.3 !important;
+  color: var(--ds-text) !important;
+}
+label {
+  font-family: var(--sans) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  color: var(--ds-text-2) !important;
+  margin-bottom: 7px !important;
+}
+.clock, .tx-num, .fert-num, .mono, .big-temp {
+  font-family: var(--mono) !important;
+  font-variant-numeric: tabular-nums;
+}
+.big-temp {
+  font-weight: 700 !important;
+  color: var(--ds-text) !important;
+  -webkit-text-fill-color: var(--ds-text) !important;
+  background: none !important;
+  letter-spacing: -0.03em !important;
+}
+.logo-name {
+  font-family: var(--sans) !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  color: var(--ds-text) !important;
+  -webkit-text-fill-color: var(--ds-text) !important;
+  background: none !important;
+}
+.logo-sub {
+  font-family: var(--sans) !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  color: var(--ds-text-3) !important;
+}
+.t2 { color: var(--ds-text-2) !important; }
+.t3 { color: var(--ds-text-3) !important; }
+.tg { color: var(--ds-accent) !important; }
+.ta { color: var(--ds-warn) !important; }
+.tr { color: var(--ds-danger) !important; }
+.tb { color: var(--ds-info) !important; }
+
+/* ---------- Icon chips on section titles ----------
+   Delivered via ::before on the stable #sec-* ids FeatureGrid
+   already renders, so no component is touched and no new import
+   can trip the CI guard job. Emoji are CSS unicode escapes, never
+   literal glyphs - literal multi-byte characters have been
+   corrupted by whole-file writes in this repo before. */
+.card-title::before {
+  content: "\01F331";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px; height: 28px;
+  border-radius: var(--ds-r-sm);
+  font-size: 14px;
+  line-height: 1;
+  background: var(--ds-accent-soft);
+  border: 1px solid var(--ds-accent-line);
+}
+#sec-scan .card-title::before { content: "\01F52C"; }
+#sec-planner .card-title::before { content: "\01F4CB"; }
+#sec-weather .card-title::before { content: "\026C5"; }
+#sec-mandi .card-title::before { content: "\01F4B0"; }
+#sec-fert .card-title::before { content: "\01F9EA"; }
+#sec-community .card-title::before { content: "\01F465"; }
+#sec-market .card-title::before { content: "\01F6D2"; }
+#sec-schemes .card-title::before { content: "\01F4DC"; }
+#sec-yield .card-title::before { content: "\01F4CA"; }
+#sec-encyclopedia .card-title::before { content: "\01F4D6"; }
+#sec-video .card-title::before { content: "\01F4FA"; }
+#sec-kvk .card-title::before { content: "\01F4DE"; }
+#sec-rentals .card-title::before { content: "\01F69C"; }
+#sec-soil .card-title::before { content: "\01F331"; }
+#sec-calendar .card-title::before { content: "\01F4C5"; }
+#sec-seasonal .card-title::before { content: "\01F33E"; }
+#sec-ledger .card-title::before { content: "\01F4D2"; }
+#sec-fert-tracker .card-title::before { content: "\01F4C8"; }
+/* Pest renders its own caterpillar inside the title string. */
+#sec-pest .card-title::before { display: none !important; }
+
+/* ---------- Controls ---------- */
+.btn, .btn-g, .btn-o, .btn-r, .btn-sm {
+  font-family: var(--sans) !important;
+  font-weight: 600 !important;
+  border-radius: var(--ds-r-sm) !important;
+  box-shadow: none !important;
+  transition: background 0.16s var(--ds-ease), border-color 0.16s var(--ds-ease) !important;
+}
+.btn-g {
+  background: var(--ds-accent-2) !important;
+  color: #fff !important;
+  border: 1px solid var(--ds-accent-2) !important;
+  text-shadow: none !important;
+}
+.btn-g:hover { background: var(--ds-accent) !important; border-color: var(--ds-accent) !important; }
+.btn-o {
+  background: transparent !important;
+  color: var(--ds-accent) !important;
+  border: 1px solid var(--ds-line-2) !important;
+}
+.btn-o:hover { background: var(--ds-accent-soft) !important; border-color: var(--ds-accent-line) !important; }
+.btn-r {
+  background: transparent !important;
+  color: var(--ds-danger) !important;
+  border: 1px solid var(--ds-danger-soft) !important;
+}
+.btn:active, .btn-g:active, .btn-o:active, .btn-r:active {
+  transform: translateY(1px) !important;
+  box-shadow: none !important;
+}
+.btn:focus-visible, .btn-g:focus-visible, .btn-o:focus-visible,
+.btn-r:focus-visible, button:focus-visible, a:focus-visible,
+.input:focus-visible, [role="button"]:focus-visible {
+  outline: none !important;
+  box-shadow: var(--ds-focus) !important;
+}
+
+.input, textarea.input, input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="search"] {
+  background-color: var(--ds-surface-2) !important;
+  background-image: none !important;
+  border: 1px solid var(--ds-line-2) !important;
+  border-radius: 12px !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.18), 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  color: var(--ds-text) !important;
+  font-family: var(--sans) !important;
+  font-size: 14.5px !important;
+  padding: 11px 16px !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+select.input, select {
+  background-color: var(--ds-surface-2) !important;
+  border: 1px solid var(--ds-line-2) !important;
+  border-radius: 12px !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.18), 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  color: var(--ds-text) !important;
+  font-family: var(--sans) !important;
+  font-size: 14.5px !important;
+  font-weight: 500 !important;
+  padding: 11px 40px 11px 16px !important;
+  cursor: pointer !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2334d399' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+  background-size: 16px 16px !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.input:hover, select.input:hover, textarea.input:hover, select:hover, input:hover {
+  border-color: rgba(52, 211, 153, 0.45) !important;
+  background-color: var(--ds-surface-3) !important;
+}
+
+.input:focus, select.input:focus, textarea.input:focus, select:focus, input:focus {
+  border-color: var(--ds-accent) !important;
+  background-color: var(--ds-surface-3) !important;
+  box-shadow: 0 0 0 3.5px rgba(52, 211, 153, 0.22), inset 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+  outline: none !important;
+}
+.input::placeholder, textarea.input::placeholder, input::placeholder { color: var(--ds-text-3) !important; }
+
+option {
+  background-color: #121c17 !important;
+  color: #eef2ef !important;
+  font-size: 14.5px !important;
+  padding: 10px 14px !important;
+}
+html.light option {
+  background-color: #ffffff !important;
+  color: #111a15 !important;
+}
+
+.chip {
+  font-family: var(--sans) !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  border-radius: var(--ds-r-pill) !important;
+  box-shadow: none !important;
+  border: 1px solid var(--ds-line) !important;
+  background: var(--ds-surface-2) !important;
+  color: var(--ds-text-2) !important;
+  padding: 4px 11px !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+.chip.cg { background: var(--ds-accent-soft) !important; color: var(--ds-accent) !important; border-color: var(--ds-accent-line) !important; }
+.chip.ca { background: var(--ds-warn-soft) !important; color: var(--ds-warn) !important; border-color: var(--ds-warn-soft) !important; }
+.chip.cr { background: var(--ds-danger-soft) !important; color: var(--ds-danger) !important; border-color: var(--ds-danger-soft) !important; }
+.chip.cb { background: var(--ds-info-soft) !important; color: var(--ds-info) !important; border-color: var(--ds-info-soft) !important; }
+.filter-btn, .badge {
+  font-family: var(--sans) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  border-radius: var(--ds-r-pill) !important;
+  color: var(--ds-text-2) !important;
+}
+.filter-btn.active { background: var(--ds-accent-soft) !important; color: var(--ds-accent) !important; }
+.avatar { background: var(--ds-accent-soft) !important; border: 1px solid var(--ds-accent-line) !important; box-shadow: none !important; }
+.prog { background: var(--ds-surface-3) !important; }
+.prog-fill { background: var(--ds-accent) !important; }
+.step-bar { background: var(--ds-surface-3) !important; }
+.step-bar.active { background: var(--ds-accent) !important; }
+.skel { background: linear-gradient(90deg, var(--ds-surface-2) 25%, var(--ds-surface-3) 50%, var(--ds-surface-2) 75%) !important; }
+.dropzone { background: var(--ds-surface-2) !important; border: 1px dashed var(--ds-line-2) !important; border-radius: var(--ds-r) !important; }
+.dropzone:hover { border-color: var(--ds-accent-line) !important; background: var(--ds-accent-soft) !important; }
+.upload-btn { background: var(--ds-surface-3) !important; border: 1px solid var(--ds-line) !important; border-radius: var(--ds-r-sm) !important; color: var(--ds-text) !important; }
+.slider { background: var(--ds-surface-3) !important; }
+.slider::-webkit-slider-thumb { background: var(--ds-accent) !important; }
+.slider::-moz-range-thumb { background: var(--ds-accent) !important; }
+
+/* ---------- Header ----------
+   Fully opaque. Previously translucent with the mobile blur
+   stripped for performance, which meant page content scrolled
+   visibly through it. */
+.header {
+  background: var(--ds-surface) !important;
+  border: none !important;
+  border-bottom: 1px solid var(--ds-line) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.logo-icon { background: var(--ds-accent-soft) !important; border: 1px solid var(--ds-accent-line) !important; box-shadow: none !important; }
+.clock { background: transparent !important; border: none !important; color: var(--ds-text-2) !important; }
+.theme-toggle-btn, .install-btn, .lang-dropdown-btn, .modal-close, .hamburger-btn,
+.header-inner > div:first-child > button {
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  color: var(--ds-text) !important;
+}
+.theme-toggle-btn:hover, .install-btn:hover, .lang-dropdown-btn:hover,
+.modal-close:hover, .header-inner > div:first-child > button:hover {
+  background: var(--ds-surface-2) !important;
+  border-color: var(--ds-line) !important;
+}
+
+/* ---------- Sidebar drawer ----------
+   SidebarDrawer.jsx injects its own <style> at mount, so it lands
+   after these imports and wins on equal specificity - hence
+   !important here. Two problems fixed:
+   1. It sets backdrop-filter: blur(28px) saturate(180%). That is
+      glassmorphism, and blurring a 300px full-height panel is the
+      single most expensive paint on the low-end Android this app
+      targets. The old global.css stripped mobile blur; that rule
+      is gone, so it is asserted here for all viewports.
+   2. Its box-shadow was a 48px black spread, which on the new
+      flat surfaces reads as a smear rather than elevation. */
+.drawer {
+  background: var(--ds-surface) !important;
+  border-right: 1px solid var(--ds-line) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: var(--ds-sh-3) !important;
+  --dw-line: var(--ds-line) !important;
+  --dw-chip: var(--ds-surface-2) !important;
+  --dw-chip-line: var(--ds-line) !important;
+}
+.drawer-overlay { backdrop-filter: blur(2px) !important; -webkit-backdrop-filter: blur(2px) !important; }
+.drawer-header { background: transparent !important; border-bottom: 1px solid var(--ds-line) !important; }
+.drawer-logo { background: var(--ds-accent-soft) !important; border: 1px solid var(--ds-accent-line) !important; box-shadow: none !important; }
+.drawer-brand-sub, .drawer-section-label, .drawer-footer-text {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-family: var(--sans) !important;
+}
+.drawer-link-icon { background: var(--ds-surface-2) !important; border: 1px solid var(--ds-line) !important; }
+/* translateX on hover shifts every row and causes a repaint on a
+   19-item list; a background change conveys the same affordance. */
+.drawer-link:hover, .drawer-link:active {
+  transform: none !important;
+  background: var(--ds-surface-2) !important;
+  border-color: var(--ds-line) !important;
+}
+.drawer-version-dot { box-shadow: none !important; }
+
+/* ---------- Layout ---------- */
+.grid { columns: auto !important; }
+.main { max-width: 1560px !important; padding-bottom: calc(100px + env(safe-area-inset-bottom)) !important; }
+
+
+/* ---------- Modals ---------- */
+.modal, .modal-bg, .modal-overlay {
+  background: rgba(0, 0, 0, 0.62) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+}
+.modal-content, .modal-overlay > .card, .modal-bg > .card {
+  background: var(--ds-surface) !important;
+  border: 1px solid var(--ds-line) !important;
+  box-shadow: var(--ds-sh-3) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.modal-content { border-radius: var(--ds-r-lg) !important; }
+
+/* ---------- Misc ---------- */
+.toast {
+  background: var(--ds-surface-2) !important;
+  border: 1px solid var(--ds-line) !important;
+  border-left: 3px solid var(--ds-accent) !important;
+  border-radius: var(--ds-r) !important;
+  box-shadow: var(--ds-sh-3) !important;
+}
+.divider { background: var(--ds-line) !important; }
+.ticker-content { padding-left: 100% !important; }
+.ks-footer { background: transparent !important; border-top: 1px solid var(--ds-line) !important; border-radius: 0 !important; }
+.ks-footer-title { color: var(--ds-text-3) !important; }
+.ks-footer-links a, .ks-social-row { color: var(--ds-text-2) !important; }
+.ks-footer-links a:hover, .ks-social-row:hover { color: var(--ds-accent) !important; }
+.ks-footer-bottom, .ks-footer-bottom * { font-family: var(--sans) !important; color: var(--ds-text-3) !important; }
+.skip-link { background: var(--ds-accent-2) !important; color: #fff !important; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--ds-line-2) !important; border-radius: var(--ds-r-pill) !important; }
+::selection { background: var(--ds-accent-soft); color: var(--ds-text); }
+
+/* ---------- Skeleton loaders & Micro-shimmers ---------- */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--ds-surface-2) 25%, var(--ds-surface-3) 50%, var(--ds-surface-2) 75%) !important;
+  background-size: 200% 100% !important;
+  animation: shimmer 1.5s infinite !important;
+  border-radius: var(--ds-r-sm) !important;
+}
+
+/* ---------- High contrast, asserted last ---------- */
+html.contrast .card, html.contrast .header, html.contrast .modal-content,
+html.contrast .drawer, html.contrast .toast, html.contrast .post-card,
+html.contrast .res-card, html.contrast .fert-box, html.contrast .day-detail,
+html.contrast .detail-box, html.contrast .chip, html.contrast .input {
+  background: #000 !important;
+  border: 1px solid #fff !important;
+  box-shadow: none !important;
+}

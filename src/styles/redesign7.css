@@ -1,0 +1,316 @@
+/* =============================================================
+ * redesign7.css — R201 COMPREHENSIVE UI POLISH
+ *
+ * This file fixes:
+ *   1. Content hidden behind bottom nav (padding)
+ *   2. Feature grid: 2-column layout on mobile for better density
+ *   3. Cards: premium shadow, hover lift, smoother radius
+ *   4. Home hero: compact & punchy on mobile
+ *   5. Header: slim on mobile
+ *   6. Tab content: proper full-screen fill for dedicated tabs
+ *   7. Desktop: remove nav-bar clearance since bar hides at 900px
+ *   8. General spacing cleanup
+ *
+ * Loads LAST (after redesign6.css) so it wins cascade.
+ * ============================================================= */
+
+/* ─── 1. BOTTOM NAV CLEARANCE ────────────────────────────────
+ * All three padding sources are synced here.
+ * On mobile: 100px clears 64px bar + 22px scan button + 14px air.
+ * On desktop (≥900px): nav bar hides, reset to comfortable 40px. */
+@media (max-width: 899px) {
+  .main {
+    padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+@media (min-width: 900px) {
+  .main {
+    padding-bottom: 40px !important;
+  }
+}
+
+/* ─── 2. FEATURE GRID — 2 COLUMNS ON MOBILE ────────────────── */
+@media (max-width: 899px) and (min-width: 480px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+}
+@media (max-width: 479px) {
+  .grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+}
+
+/* ─── 3. CARDS — PREMIUM LOOK ───────────────────────────────── */
+.card {
+  border-radius: 18px !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+/* Dark mode cards — more depth */
+html.dark .card,
+:root .card {
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.3),
+    0 4px 16px rgba(0,0,0,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+}
+html.dark .card:hover,
+:root .card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow:
+    0 2px 6px rgba(0,0,0,0.3),
+    0 8px 28px rgba(0,0,0,0.25),
+    0 0 0 1px rgba(52,211,153,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.06) !important;
+}
+/* Light mode cards */
+html.light .card {
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.07),
+    0 4px 16px rgba(0,0,0,0.06) !important;
+  border: 1px solid rgba(11,60,38,0.09) !important;
+}
+html.light .card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow:
+    0 2px 8px rgba(0,0,0,0.09),
+    0 8px 24px rgba(0,0,0,0.08),
+    0 0 0 1px rgba(21,128,61,0.08) !important;
+}
+/* Disable hover lift on touch devices — avoids stuck state */
+@media (hover: none) {
+  .card:hover {
+    transform: none !important;
+  }
+}
+
+/* Card header title slightly larger */
+.card-title {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* ─── 4. HOME HERO — COMPACT & IMPACTFUL ON MOBILE ──────────── */
+@media (max-width: 600px) {
+  .home-hero {
+    padding: 28px 18px 22px !important;
+    border-radius: 14px !important;
+    margin-bottom: 4px !important;
+  }
+  .home-hero-badge {
+    font-size: 11px !important;
+    padding: 4px 10px !important;
+    margin-bottom: 10px !important;
+    display: inline-flex !important;
+  }
+  .home-hero-title {
+    font-size: clamp(21px, 5.5vw, 30px) !important;
+    line-height: 1.18 !important;
+    margin-bottom: 8px !important;
+    letter-spacing: -0.02em !important;
+  }
+  .home-hero-sub {
+    font-size: 13px !important;
+    line-height: 1.55 !important;
+    margin-bottom: 16px !important;
+    opacity: 0.78 !important;
+  }
+  .home-hero-actions {
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+  }
+  .home-hero-action {
+    flex: 1 1 calc(50% - 4px) !important;
+    min-width: 0 !important;
+    padding: 10px 8px !important;
+    font-size: 11.5px !important;
+    border-radius: 12px !important;
+    gap: 6px !important;
+  }
+  .home-hero-action-icon {
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 9px !important;
+  }
+  /* Orbs — scale down on mobile */
+  .home-hero-orb {
+    opacity: 0.4 !important;
+    transform: scale(0.7) !important;
+  }
+}
+
+/* ─── 5. HEADER — SLIM ON MOBILE ────────────────────────────── */
+@media (max-width: 600px) {
+  /* Reduce header vertical footprint */
+  .header {
+    padding: 0 10px !important;
+  }
+  .header-inner {
+    height: 52px !important;
+    min-height: 52px !important;
+    gap: 8px !important;
+  }
+  /* App name — slightly smaller on very small screens */
+  .app-name, .header-brand, .site-name {
+    font-size: 16px !important;
+    letter-spacing: -0.01em !important;
+  }
+  /* Hamburger — tighter */
+  .hamburger-btn {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+  }
+}
+
+/* ─── 6. TAB CONTENT — DEDICATED TABS FILL SCREEN ───────────── */
+/* Weather, Mandi, Scan tabs should expand to fill available space */
+@media (max-width: 899px) {
+  /* The wrapper div FeatureGrid renders for non-home tabs */
+  .tab-content-enter > div {
+    min-height: calc(100dvh - 130px) !important;
+  }
+}
+
+/* ─── 7. NEWS TICKER — TIGHTER ON MOBILE ────────────────────── */
+@media (max-width: 600px) {
+  .ticker-bar, .news-ticker, [class*="ticker-bar"] {
+    font-size: 11.5px !important;
+    padding: 5px 0 !important;
+  }
+}
+
+/* ─── 8. MAIN CONTENT — BETTER HORIZONTAL PADDING ───────────── */
+@media (max-width: 600px) {
+  .main {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+}
+@media (max-width: 380px) {
+  .main {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+}
+
+/* ─── 9. SEASONAL BANNER & DAILY TIP — TIGHTER MOBILE ──────── */
+@media (max-width: 600px) {
+  /* Reduce the large gap between sections */
+  .seasonal-banner,
+  [class*="SeasonalBanner"],
+  [class*="DailyTip"],
+  .daily-tip {
+    margin-bottom: 8px !important;
+  }
+}
+
+/* ─── 10. SCROLL-TO-TOP BUTTON — STAYS ABOVE NAV ───────────── */
+/* Already fixed in ScrollTopButton.jsx but reinforce here */
+@media (max-width: 899px) {
+  button[aria-label="Back to top"],
+  button[title="Scroll to top"] {
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+/* ─── 11. GRID CARD LAST ITEM — EXTRA BREATHING ROOM ─────────
+ * The last card in the grid on the home tab gets extra bottom
+ * margin to ensure it's never flush against the bottom padding. */
+.grid > div:last-child {
+  margin-bottom: 4px;
+}
+
+/* ─── 12. ACTIVE TAB ANIMATION — SUBTLE SCALE ON TAP ──────── */
+.bn-tab:active, .bn-cam-btn:active {
+  transition: transform 0.08s ease !important;
+}
+
+/* ─── 13. MODAL POSITIONING — AVOID NAV BAR ON MOBILE ───────── */
+@media (max-width: 899px) {
+  /* Modals center in the area ABOVE the nav bar */
+  .modal-overlay, .modal-bg {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+    align-items: center !important;
+  }
+}
+
+/* ─── 14. FLOATING LOGIN BTN — NEVER BEHIND NAV ─────────────── */
+/* This is already set in FloatingLoginBtn.jsx but reinforce */
+
+/* ─── 15. CARD BODY — PADDING CONSISTENCY ───────────────────── */
+@media (max-width: 480px) {
+  .card {
+    padding: 14px !important;
+  }
+  .card-hd {
+    padding: 12px 14px !important;
+  }
+  .card-body {
+    padding: 12px 14px !important;
+  }
+}
+
+/* ─── 16. GPU & SCROLL PERFORMANCE (PERF_R202) ─────────────── */
+.ticker-content {
+  will-change: transform;
+  transform: translateZ(0);
+}
+.bottom-nav {
+  will-change: transform;
+  transform: translateZ(0);
+}
+.lazy-card-placeholder {
+  contain: paint layout style;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 240px;
+}
+
+/* ─── 17. GRID CONTAINMENT — PREVENT HORIZONTAL BLOWOUTS ───── */
+.grid > div {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+/* ─── 18. TOAST NOTIFICATIONS — ELEVATE ABOVE BOTTOM NAV ────── */
+.toast {
+  z-index: 9999 !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45) !important;
+  border-radius: 12px !important;
+}
+@media (max-width: 899px) {
+  .toast {
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important;
+    left: 14px !important;
+    right: 14px !important;
+    max-width: none !important;
+  }
+}
+@media (min-width: 900px) {
+  .toast {
+    bottom: 24px !important;
+    right: 90px !important; /* Left of 56px voice FAB at right:18px */
+  }
+}
+
+/* ─── 19. COOKIE CONSENT — ALWAYS ABOVE BOTTOM NAV ─────────── */
+@media (max-width: 899px) {
+  div[aria-label="Cookie notice"],
+  .cookie-consent-bar {
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
+    z-index: 650 !important;
+  }
+}
+
+/* ─── 20. SKELETON CARD POLISH — SMOOTH SHIMMER ────────────── */
+.skel-card {
+  border-radius: 18px !important;
+  background: var(--s2, #141f18) !important;
+  border: 1px solid var(--b1, rgba(255, 255, 255, 0.08)) !important;
+}
+
+

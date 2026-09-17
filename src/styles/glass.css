@@ -1,0 +1,9 @@
+
+@media print {
+  body * { visibility: hidden; }
+  #yield-result, #yield-result * { visibility: visible; }
+  #yield-result { position: absolute; left: 0; top: 0; width: 100%; }
+}
+
+
+/* ks-footer R103 */
