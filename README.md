@@ -178,6 +178,44 @@ flowchart TD
 
 ---
 
+## 📊 Data Transparency & Telemetry Disclosure
+
+AgroIntel maintains complete ethical transparency regarding real-time vs. calculated vs. fallback data sources:
+
+| Data Point | Data Status | Source & Technical Methodology | Fallback Strategy |
+|---|---|---|---|
+| **Weather & Soil Moisture** | 🟢 **Live Telemetry** | Open-Meteo GFS & ECMWF High-Resolution Agro API (0-28 cm soil depth, wind, rain probability) | Fixed Pune regional Agro climatic default |
+| **Fuel Prices (Diesel/Petrol)** | 🟢 **Live Web Scraper** | Scraped hourly via HTTPX & BeautifulSoup from GoodReturns for all 28 Indian states | Cached state averages |
+| **Agri News & Schemes** | 🟢 **Live RSS Feed** | Scraped from The Hindu BusinessLine Agri & Press Information Bureau (PIB) RSS | Cached statutory news alerts |
+| **APMC Mandi Rates & Trends** | 🟢 **Live / Cache Series** | Scraped from Agmarknet & APMC Pune with continuous 7-day historical interpolation | 7-day continuous simulated series |
+| **Fertilizer Statutory MRPs** | 🟡 **Statutory Live** | Official Dept. of Fertilizers Gazette Notifications (Urea ₹266.50/bag, DAP ₹1,350/bag, MOP ₹1,700/bag) | Fixed statutory MRP database |
+| **Government Schemes & Subsidies** | 🟡 **Statutory Data** | Official Ministry of Agriculture & Farmers Welfare guidelines (PM-KISAN, PMFBY, SMAM) | Offline indexed scheme database |
+| **KCC Scale of Finance** | 🔵 **ICAR / RBI Formula** | RBI Scale of Finance equations with 3% prompt repayment subvention (effective 4% rate) | Deterministic financial model |
+| **NPK Bag Calculations** | 🔵 **ICAR Formula** | ICAR Crop Nutrient Stoichiometric Equations per acre & soil type | Deterministic agronomic model |
+| **AI Plant Disease Diagnosis** | 🟣 **Multimodal Vision** | Groq LPU `qwen/qwen3.8-27b` + `openai/gpt-oss-20b` multi-pass consensus engine | Offline ICAR Disease Encyclopedia |
+
+---
+
+## 🔌 API Endpoint Reference
+
+| Method | Endpoint | Description | Cache / Rate Policy |
+|---|---|---|---|
+| `GET` | `/health` | System heartbeat, uptime & server timestamp | Live (No-cache) |
+| `GET` | `/api/weather` | 15-day agro-meteorology, soil moisture & spray windows | 15 min TTL cache |
+| `GET` | `/api/fuel` | State-wise live diesel & petrol rates | 1 hour TTL cache |
+| `GET` | `/api/mandi` | Live APMC mandi rates across staple commodities | 10 min TTL cache |
+| `GET` | `/api/mandi/history` | 7-day continuous historical price series | 10 min TTL cache |
+| `GET` | `/api/news` | Real-time Indian agriculture news headlines | 30 min TTL cache |
+| `GET` | `/api/fertilizers` | Statutory fertilizer MRPs & composition data | 24 hour TTL cache |
+| `GET` | `/api/posts` | Community farmer discussion threads | Live Supabase query |
+| `POST` | `/api/posts` | Create new farmer community post | JWT / IP rate limited |
+| `GET` | `/api/settings` | 19 remote feature toggles & display configuration | 5 min TTL cache |
+| `POST` | `/api/scan` | AI Plant Disease Vision Scanner | Groq LPU / Rate limited |
+| `POST` | `/api/crop-doctor` | Crop symptom advisor & prescription generator | Groq LPU / Rate limited |
+| `POST` | `/api/chat` | Vernacular conversational agronomy assistant | Groq LPU / Streaming SSE |
+| `WS` | `/ws/prices` | Real-time price push notifications | Persistent WebSocket |
+
+
 ## 💻 Local Development & Installation Guide
 
 ### Prerequisites
@@ -210,13 +248,13 @@ source venv/bin/activate
 # Install dependencies (Note: Pillow is excluded by design for stability)
 pip install -r requirements.txt
 
-# Create your .env file
+# Create your local .env file (DO NOT commit secrets to Git)
 cat <<EOF > .env
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-supabase-anon-or-service-key
-GROQ_API_KEY=gsk_your_groq_api_key_here
-ADMIN_PASS=YourStrongAdminPassword123
-SECRET_KEY=YourJWTSecretTokenHere
+GROQ_API_KEY=<YOUR_GROQ_API_KEY>
+SUPABASE_URL=<YOUR_SUPABASE_PROJECT_URL>
+SUPABASE_KEY=<YOUR_SUPABASE_ANON_OR_SERVICE_KEY>
+ADMIN_PASSWORD=<SET_YOUR_ADMIN_PASSWORD>
+SECRET_KEY=<YOUR_RANDOM_JWT_SECRET_SALT>
 DEFAULT_ADMIN_USER=Avishkar
 EOF
 
@@ -260,23 +298,27 @@ Admin portal will be available at `http://localhost:5174`.
 
 ---
 
-## 🔑 Environment Variables Reference
+## 🔑 Environment Variables & Production Security
 
-### Backend (`backend/.env`)
+> [!IMPORTANT]
+> **Admin Password & Production Secrets:**  
+> The admin authentication password (`ADMIN_PASSWORD` / `ADMIN_PASS`) and API keys are **NEVER hardcoded in source code or committed to Git**. In production (such as on Render or Cloudflare), secrets are configured strictly through the **Hosting Environment Variables Dashboard**.
+
+### Backend (`backend/.env` or Render Dashboard)
+| Variable | Description | Required | Configuration Location |
+|---|---|---|---|
+| `GROQ_API_KEY` | Groq Cloud API key for ultra-fast LPU inference | **Yes** | Render Dashboard / Local `.env` |
+| `SUPABASE_URL` | Supabase project REST URL | **Yes** | Render Dashboard / Local `.env` |
+| `SUPABASE_KEY` | Supabase Anon or Service Role key | **Yes** | Render Dashboard / Local `.env` |
+| `ADMIN_PASSWORD` | Master password for admin portal access | **Yes** | Set via Render Dashboard only |
+| `SECRET_KEY` | Cryptographic salt for signing JWT tokens | **Yes** | Render Dashboard / Local `.env` |
+| `DEFAULT_ADMIN_USER` | Default administrator username | No | Render Dashboard / Local `.env` (Default: `Avishkar`) |
+| `PORT` | Listening port for production runner | No | Hosting default (`8000`) |
+
+### Frontend & Admin Panel (`.env` or Cloudflare Pages)
 | Variable | Description | Required | Example |
 |---|---|---|---|
-| `GROQ_API_KEY` | Groq Cloud API key for LPU inference | **Yes** | `gsk_...` |
-| `SUPABASE_URL` | Supabase project REST URL | **Yes** | `https://xyz.supabase.co` |
-| `SUPABASE_KEY` | Supabase Anon or Service Role key | **Yes** | `eyJhbG...` |
-| `ADMIN_PASS` | Master authentication password for admin panel | **Yes** | `SecurePass123` |
-| `DEFAULT_ADMIN_USER` | Default admin username | No | `Avishkar` |
-| `SECRET_KEY` | Secret salt for signing JWT tokens | **Yes** | `random_32_bytes_hex` |
-| `PORT` | Listening port for production runner | No | `8000` |
-
-### Frontend & Admin Panel (`.env`)
-| Variable | Description | Required | Example |
-|---|---|---|---|
-| `VITE_API_URL` | Base HTTP URL for the FastAPI backend | **Yes** | `http://localhost:8000` (Dev) / `https://agrointel-backend-ucic.onrender.com` (Prod) |
+| `VITE_API_URL` | Base HTTP endpoint for the FastAPI backend | **Yes** | `http://localhost:8000` (Dev) / `https://agrointel-backend-ucic.onrender.com` (Prod) |
 
 ---
 
