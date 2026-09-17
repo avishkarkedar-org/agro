@@ -76,10 +76,12 @@ def delete_admin(admin_id: str, user: dict = Depends(check_superadmin)):
     log_audit(user["username"], "delete_admin", {"target_username": target["username"]})
     return {"ok": True, "message": "Admin deleted"}
 
+from typing import Optional, List, Dict, Any
+
 class AdminUpdate(BaseModel):
-    is_suspended: bool = None
-    allowed_permissions: list = None
-    password: str = None
+    is_suspended: Optional[bool] = None
+    allowed_permissions: Optional[List[str]] = None
+    password: Optional[str] = None
 
 @router.patch("/api/superadmin/admins/{admin_id}")
 def update_admin(admin_id: str, req: AdminUpdate, user: dict = Depends(check_superadmin)):

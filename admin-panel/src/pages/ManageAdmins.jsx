@@ -87,13 +87,16 @@ export default function ManageAdmins({ user }) {
 
   const handleSaveEdit = async () => {
     try {
+      const payload = {
+        allowed_permissions: editPermissions,
+        is_suspended: editSuspended,
+      };
+      if (newPassword && newPassword.trim()) {
+        payload.password = newPassword.trim();
+      }
       await api(`/api/superadmin/admins/${editingAdmin.id}`, {
         method: "PATCH",
-        body: JSON.stringify({
-          allowed_permissions: editPermissions,
-          is_suspended: editSuspended,
-          password: newPassword || null,
-        }),
+        body: JSON.stringify(payload),
       });
       notify("Admin profile updated!");
       setEditingAdmin(null);

@@ -1,34 +1,16 @@
 -- ============================================================
--- AgroIntel Fresh Database Reset & Complete Setup (Supabase)
--- Run this in the Supabase SQL Editor to reset and rebuild all tables.
+-- AgroIntel Universal Complete Database Setup (Supabase)
+-- Safe, Idempotent, and Non-Destructive
+-- Run this in the Supabase SQL Editor to ensure all tables,
+-- columns, indexes, and RLS policies are 100% complete and up-to-date.
 -- ============================================================
 
 -- ------------------------------------------------------------
--- STEP 1: DROP ALL EXISTING TABLES & OBJECTS (CLEAN SLATE)
--- ------------------------------------------------------------
-DROP TABLE IF EXISTS access_codes CASCADE;
-DROP TABLE IF EXISTS user_access_codes CASCADE;
-DROP TABLE IF EXISTS admins CASCADE;
-DROP TABLE IF EXISTS app_users CASCADE;
-DROP TABLE IF EXISTS audit_logs CASCADE;
-DROP TABLE IF EXISTS bug_reports CASCADE;
-DROP TABLE IF EXISTS chat_logs CASCADE;
-DROP TABLE IF EXISTS login_activity CASCADE;
-DROP TABLE IF EXISTS mandi_history CASCADE;
-DROP TABLE IF EXISTS posts CASCADE;
-DROP TABLE IF EXISTS scan_logs CASCADE;
-DROP TABLE IF EXISTS settings CASCADE;
-DROP TABLE IF EXISTS settings_history CASCADE;
-DROP TABLE IF EXISTS user_bans CASCADE;
-DROP TABLE IF EXISTS visitors CASCADE;
-DROP TABLE IF EXISTS api_metrics CASCADE;
-
--- ------------------------------------------------------------
--- STEP 2: CREATE CORE PLATFORM TABLES
+-- STEP 1: CREATE TABLES (IF NOT ALREADY EXISTING)
 -- ------------------------------------------------------------
 
--- 1. Settings Table (Global Application Configuration, ID=1)
-CREATE TABLE settings (
+-- 1. Settings Table (Global Application Configuration)
+CREATE TABLE IF NOT EXISTS settings (
     id INTEGER PRIMARY KEY DEFAULT 1,
     site_title TEXT DEFAULT 'AgroIntel',
     youtube_id TEXT DEFAULT '',
@@ -60,7 +42,7 @@ CREATE TABLE settings (
 );
 
 -- 2. Admins Table
-CREATE TABLE admins (
+CREATE TABLE IF NOT EXISTS admins (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
@@ -70,22 +52,22 @@ CREATE TABLE admins (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 3. App Users Table (Farmer Profiles & Authentication Mapping)
-CREATE TABLE app_users (
+-- 3. App Users Table (Farmer Profiles & Authentication)
+CREATE TABLE IF NOT EXISTS app_users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username TEXT UNIQUE NOT NULL,
     display_name TEXT NOT NULL DEFAULT '',
     name TEXT DEFAULT '',
     village TEXT DEFAULT '',
-    email TEXT UNIQUE NOT NULL CHECK (length(email) <= 255),
+    email TEXT UNIQUE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 4. Access Codes Table (Tier & Premium Code Management)
-CREATE TABLE access_codes (
+-- 4. Access Codes Table (Tier & Access Code Management)
+CREATE TABLE IF NOT EXISTS access_codes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    code TEXT UNIQUE NOT NULL CHECK (length(code) <= 50),
-    tier TEXT NOT NULL DEFAULT 'standard' CHECK (tier IN ('standard', 'premium')),
+    code TEXT UNIQUE NOT NULL,
+    tier TEXT NOT NULL DEFAULT 'standard',
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
     max_uses INTEGER DEFAULT NULL,
     current_uses INTEGER DEFAULT 0,
@@ -94,8 +76,8 @@ CREATE TABLE access_codes (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 5. Community Posts Table (Q&A & Marketplace)
-CREATE TABLE posts (
+-- 5. Community Posts Table
+CREATE TABLE IF NOT EXISTS posts (
     id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
     body TEXT NOT NULL,
@@ -107,11 +89,12 @@ CREATE TABLE posts (
     likes INTEGER DEFAULT 0,
     replies INTEGER DEFAULT 0,
     time TEXT DEFAULT '',
+    ts BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 6. Mandi Price History Table (Daily Trends)
-CREATE TABLE mandi_history (
+-- 6. Mandi Price History Table
+CREATE TABLE IF NOT EXISTS mandi_history (
     id SERIAL PRIMARY KEY,
     market TEXT NOT NULL,
     commodity TEXT NOT NULL,
@@ -124,7 +107,7 @@ CREATE TABLE mandi_history (
 );
 
 -- 7. Plant Scan Logs Table
-CREATE TABLE scan_logs (
+CREATE TABLE IF NOT EXISTS scan_logs (
     id SERIAL PRIMARY KEY,
     ts BIGINT,
     crop TEXT,
@@ -138,7 +121,7 @@ CREATE TABLE scan_logs (
 );
 
 -- 8. Crop Doctor Chat Logs Table
-CREATE TABLE chat_logs (
+CREATE TABLE IF NOT EXISTS chat_logs (
     id SERIAL PRIMARY KEY,
     question TEXT,
     crop TEXT DEFAULT '',
@@ -148,7 +131,7 @@ CREATE TABLE chat_logs (
 );
 
 -- 9. Bug Reports Kanban Table
-CREATE TABLE bug_reports (
+CREATE TABLE IF NOT EXISTS bug_reports (
     id SERIAL PRIMARY KEY,
     user_identifier TEXT DEFAULT 'Anonymous',
     title TEXT NOT NULL,
@@ -159,7 +142,7 @@ CREATE TABLE bug_reports (
 );
 
 -- 10. Audit Logs Table (Admin Actions)
-CREATE TABLE audit_logs (
+CREATE TABLE IF NOT EXISTS audit_logs (
     id SERIAL PRIMARY KEY,
     admin_username TEXT NOT NULL,
     action TEXT NOT NULL,
@@ -168,7 +151,7 @@ CREATE TABLE audit_logs (
 );
 
 -- 11. Settings History Table (Config Snapshots)
-CREATE TABLE settings_history (
+CREATE TABLE IF NOT EXISTS settings_history (
     id SERIAL PRIMARY KEY,
     changed_by TEXT NOT NULL,
     old_settings JSONB NOT NULL,
@@ -176,17 +159,18 @@ CREATE TABLE settings_history (
 );
 
 -- 12. Visitors Tracking Table
-CREATE TABLE visitors (
+CREATE TABLE IF NOT EXISTS visitors (
     id SERIAL PRIMARY KEY,
     ip TEXT,
     page TEXT DEFAULT '/',
     ua TEXT DEFAULT '',
+    time TEXT DEFAULT '',
     ts TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 13. Login Activity Table
-CREATE TABLE login_activity (
+CREATE TABLE IF NOT EXISTS login_activity (
     id SERIAL PRIMARY KEY,
     username TEXT NOT NULL,
     ip_address TEXT DEFAULT '',
@@ -195,7 +179,7 @@ CREATE TABLE login_activity (
 );
 
 -- 14. User Bans Table (IP & Fingerprint Defense)
-CREATE TABLE user_bans (
+CREATE TABLE IF NOT EXISTS user_bans (
     id SERIAL PRIMARY KEY,
     ip_or_fingerprint TEXT NOT NULL,
     reason TEXT DEFAULT 'Violation of terms',
@@ -204,7 +188,7 @@ CREATE TABLE user_bans (
 );
 
 -- 15. API Metrics Table (Traffic Analytics & Latency)
-CREATE TABLE api_metrics (
+CREATE TABLE IF NOT EXISTS api_metrics (
     id SERIAL PRIMARY KEY,
     endpoint TEXT NOT NULL,
     method TEXT NOT NULL,
@@ -215,71 +199,83 @@ CREATE TABLE api_metrics (
 );
 
 -- ------------------------------------------------------------
+-- STEP 2: ENSURE ALL COLUMNS EXIST (NON-DESTRUCTIVE MIGRATIONS)
+-- ------------------------------------------------------------
+
+-- Settings Columns
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS site_title TEXT DEFAULT 'AgroIntel';
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS youtube_id TEXT DEFAULT '';
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS announcement TEXT DEFAULT '';
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS ann_image TEXT DEFAULT '';
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS ann_start_date TEXT DEFAULT '';
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS ann_end_date TEXT DEFAULT '';
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS bulk_message TEXT DEFAULT '';
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS maintenance_mode BOOLEAN DEFAULT false;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS maintenance_schedule JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS rate_limit_config JSONB DEFAULT '{"max_req": 20, "window": 60}'::jsonb;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS mandi_prices JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS fuel_prices JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS rentals JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS verified_experts JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS custom_news JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS disabled_features JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS feature_order JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS login_required_features JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS blocked_ips JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS access_code_setting JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS admin_profiles JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS voice_settings JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS advanced_features JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS ai_settings JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS ws_settings JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS gql_settings JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE settings ADD COLUMN IF NOT EXISTS weather_settings JSONB DEFAULT '{}'::jsonb;
+
+-- Admins Columns
+ALTER TABLE admins ADD COLUMN IF NOT EXISTS force_logout_ts TIMESTAMP WITH TIME ZONE DEFAULT NULL;
+ALTER TABLE admins ADD COLUMN IF NOT EXISTS security_policy JSONB DEFAULT '{}'::jsonb;
+
+-- App Users Columns
+ALTER TABLE app_users ADD COLUMN IF NOT EXISTS display_name TEXT NOT NULL DEFAULT '';
+ALTER TABLE app_users ADD COLUMN IF NOT EXISTS name TEXT DEFAULT '';
+ALTER TABLE app_users ADD COLUMN IF NOT EXISTS village TEXT DEFAULT '';
+
+-- Posts Columns
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS user_email TEXT DEFAULT '';
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS ts BIGINT DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT;
+
+-- Visitors Columns
+ALTER TABLE visitors ADD COLUMN IF NOT EXISTS time TEXT DEFAULT '';
+
+-- ------------------------------------------------------------
 -- STEP 3: HIGH-PERFORMANCE INDEXES
 -- ------------------------------------------------------------
-CREATE INDEX idx_posts_created_at ON posts(created_at DESC);
-CREATE INDEX idx_posts_tag ON posts(tag);
-CREATE INDEX idx_mandi_history_date ON mandi_history(snapshot_date DESC);
-CREATE INDEX idx_mandi_history_commodity ON mandi_history(commodity);
-CREATE INDEX idx_visitors_ts ON visitors(ts DESC);
-CREATE INDEX idx_scan_logs_created_at ON scan_logs(created_at DESC);
-CREATE INDEX idx_chat_logs_created_at ON chat_logs(created_at DESC);
-CREATE INDEX idx_audit_logs_created_at ON audit_logs(created_at DESC);
-CREATE INDEX idx_bug_reports_status ON bug_reports(status);
-CREATE INDEX idx_user_bans_ip ON user_bans(ip_or_fingerprint);
-CREATE INDEX idx_api_metrics_ts ON api_metrics(ts DESC);
-CREATE INDEX idx_login_activity_ts ON login_activity(timestamp DESC);
-CREATE INDEX idx_app_users_email ON app_users(email);
-CREATE INDEX idx_app_users_username ON app_users(username);
-CREATE INDEX idx_access_codes_code ON access_codes(code);
+CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_posts_tag ON posts(tag);
+CREATE INDEX IF NOT EXISTS idx_mandi_history_date ON mandi_history(snapshot_date DESC);
+CREATE INDEX IF NOT EXISTS idx_mandi_history_commodity ON mandi_history(commodity);
+CREATE INDEX IF NOT EXISTS idx_visitors_ts ON visitors(ts DESC);
+CREATE INDEX IF NOT EXISTS idx_scan_logs_created_at ON scan_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_chat_logs_created_at ON chat_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_bug_reports_status ON bug_reports(status);
+CREATE INDEX IF NOT EXISTS idx_user_bans_ip ON user_bans(ip_or_fingerprint);
+CREATE INDEX IF NOT EXISTS idx_api_metrics_ts ON api_metrics(ts DESC);
+CREATE INDEX IF NOT EXISTS idx_login_activity_ts ON login_activity(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_app_users_email ON app_users(email);
+CREATE INDEX IF NOT EXISTS idx_app_users_username ON app_users(username);
+CREATE INDEX IF NOT EXISTS idx_access_codes_code ON access_codes(code);
 
 -- ------------------------------------------------------------
--- STEP 4: SEED INITIAL DATA
+-- STEP 4: SEED INITIAL ROW IN SETTINGS (IF NOT PRESENT)
 -- ------------------------------------------------------------
-
--- Seed default settings (ID=1)
-INSERT INTO settings (
-    id,
-    site_title,
-    youtube_id,
-    announcement,
-    maintenance_mode,
-    mandi_prices,
-    fuel_prices,
-    rentals,
-    verified_experts,
-    custom_news,
-    disabled_features,
-    login_required_features,
-    feature_order,
-    rate_limit_config
-) VALUES (
-    1,
-    'AgroIntel',
-    '',
-    '',
-    false,
-    '[]'::jsonb,
-    '[]'::jsonb,
-    '[]'::jsonb,
-    '[]'::jsonb,
-    '[]'::jsonb,
-    '[]'::jsonb,
-    '[]'::jsonb,
-    '[]'::jsonb,
-    '{"max_req": 20, "window": 60}'::jsonb
-) ON CONFLICT (id) DO UPDATE SET
-    site_title = EXCLUDED.site_title;
-
--- Seed default superadmin account
-INSERT INTO admins (username, password_hash, role)
-VALUES ('Avishkar', '$pbkdf2-sha256$29000$placeholder', 'superadmin')
-ON CONFLICT (username) DO NOTHING;
+INSERT INTO settings (id, site_title, maintenance_mode)
+VALUES (1, 'AgroIntel', false)
+ON CONFLICT (id) DO NOTHING;
 
 -- ------------------------------------------------------------
 -- STEP 5: ENABLE ROW LEVEL SECURITY (RLS) & POLICIES
 -- ------------------------------------------------------------
-
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admins ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_users ENABLE ROW LEVEL SECURITY;
@@ -296,7 +292,26 @@ ALTER TABLE login_activity ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_bans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE api_metrics ENABLE ROW LEVEL SECURITY;
 
--- Backend Service & Public Access Policies
+-- Drop existing policies first to prevent conflicts, then re-create
+DO $$
+BEGIN
+    DROP POLICY IF EXISTS "Full access settings" ON settings;
+    DROP POLICY IF EXISTS "Full access admins" ON admins;
+    DROP POLICY IF EXISTS "Full access app_users" ON app_users;
+    DROP POLICY IF EXISTS "Full access access_codes" ON access_codes;
+    DROP POLICY IF EXISTS "Full access posts" ON posts;
+    DROP POLICY IF EXISTS "Full access mandi_history" ON mandi_history;
+    DROP POLICY IF EXISTS "Full access scan_logs" ON scan_logs;
+    DROP POLICY IF EXISTS "Full access chat_logs" ON chat_logs;
+    DROP POLICY IF EXISTS "Full access bug_reports" ON bug_reports;
+    DROP POLICY IF EXISTS "Full access audit_logs" ON audit_logs;
+    DROP POLICY IF EXISTS "Full access settings_history" ON settings_history;
+    DROP POLICY IF EXISTS "Full access visitors" ON visitors;
+    DROP POLICY IF EXISTS "Full access login_activity" ON login_activity;
+    DROP POLICY IF EXISTS "Full access user_bans" ON user_bans;
+    DROP POLICY IF EXISTS "Full access api_metrics" ON api_metrics;
+END $$;
+
 CREATE POLICY "Full access settings" ON settings FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Full access admins" ON admins FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Full access app_users" ON app_users FOR ALL USING (true) WITH CHECK (true);
