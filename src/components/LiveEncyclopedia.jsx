@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { safeGetLS } from "../utils/helpers";
 
 const WIKI_API = "https://en.wikipedia.org/w/api.php";
 

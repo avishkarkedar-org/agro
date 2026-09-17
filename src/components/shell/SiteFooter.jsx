@@ -9,35 +9,6 @@ import {
   FileClock,
 } from "lucide-react";
 
-// BRAND_ICON_R90
-// lucide-react REMOVED every brand/logo icon (Instagram, Twitter, Youtube,
-// Facebook, Github, ...) from its icon set. Importing one is not a soft warning
-// -- the bundler fails the whole build with
-// [MISSING_EXPORT] "Instagram" is not exported by lucide-react.
-// This local component draws the same glyph inline using lucide's own geometry
-// (24x24 viewBox, currentColor stroke, width 2) and accepts the same `size`
-// prop, so it is a drop-in replacement. NEVER import a brand icon from lucide.
-function InstagramIcon({ size = 13, ...props }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-    </svg>
-  );
-}
-
 // External/mail links render as <a>; internal routes render as <Link> so they do
 // not reload the SPA.
 const FOOTER_LINKS = [
@@ -46,12 +17,6 @@ const FOOTER_LINKS = [
     icon: MessageCircle,
     to: "https://wa.me/918432884424",
     label: "WhatsApp",
-    external: true,
-  },
-  {
-    icon: InstagramIcon,
-    to: "https://instagram.com/agrointel.ai",
-    label: "Instagram",
     external: true,
   },
   { icon: Info, to: "/about", label: "About" },

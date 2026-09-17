@@ -580,8 +580,13 @@ class CropDoctorRequest(BaseModel):
 async def crop_doctor(req: CropDoctorRequest, request: Request):
     rate_limit(request, max_req=10, window=60)
     if not GROQ_KEY:
-        raise HTTPException(503, "AI not configured")
-    prompt = f"""You are an expert Indian agricultural scientist. A farmer scanned their {req.crop} plant and the AI detected: {req.disease} (Severity: {req.severity}).
+        if req.stream:
+            async def no_ai_stream():
+                yield f"data: {json.dumps({'text': 'AI Crop Doctor is temporarily offline. Please consult your local KVK or try again later.'})}\n\n"
+            return StreamingResponse(no_ai_stream(), media_type="text/event-stream")
+        return {"answer": "AI Crop Doctor is temporarily offline. Please consult your local KVK or try again later."}
+
+    prompt = f"""You are an expert Indian agricultural scientist. A farmer scanned their {req.crop or 'crop'} plant and the AI detected: {req.disease or 'General Inquiry'} (Severity: {req.severity or 'Moderate'}).
 The farmer asks: \"{req.question}\"
 Give a concise, practical answer in 2-3 sentences. Use simple language. Mention specific product names/doses if relevant."""
 
@@ -591,12 +596,17 @@ Give a concise, practical answer in 2-3 sentences. Use simple language. Mention 
         'ml': 'Malayalam', 'pa': 'Punjabi',
         'en-in': 'English', 'hi-in': 'Hindi', 'mr-in': 'Marathi'
     }
+    script_map = {
+        'Hindi': 'Devanagari', 'Marathi': 'Devanagari',
+        'Telugu': 'Telugu', 'Tamil': 'Tamil', 'Bengali': 'Bengali',
+        'Gujarati': 'Gujarati', 'Kannada': 'Kannada',
+        'Malayalam': 'Malayalam', 'Punjabi': 'Gurmukhi'
+    }
     user_lang = lang_map.get((req.lang or "en").lower().strip(), "English")
     if user_lang != "English":
-        prompt += f"\n\nMANDATORY LANGUAGE RULE: You MUST answer strictly in {user_lang.upper()} using the {user_lang} (Devanagari) script. Do not reply in English."
+        script_name = script_map.get(user_lang, f"{user_lang} native")
+        prompt += f"\n\nMANDATORY LANGUAGE RULE: You MUST answer strictly in {user_lang.upper()} using the native {script_name} script. Do not reply in English."
 
-    # TEXT_FALLBACK_R109: no "model" key here - _text_completion/_stream_text set
-    # it per candidate as they walk TEXT_MODELS.
     payload = {"messages": [{"role": "user", "content": prompt}], "max_tokens": 400, "temperature": 0.3}
     
     if req.stream:

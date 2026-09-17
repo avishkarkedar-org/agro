@@ -74,15 +74,6 @@ function currentLang() {
   return v === "hi" || v === "mr" ? v : "en";
 }
 
-const REPORT_OPTIONS = [
-  "Raining here",
-  "Sunny and hot",
-  "Cloudy",
-  "Strong wind",
-  "Frost",
-  "Hail",
-];
-
 function toast(msg) {
   window.dispatchEvent(new CustomEvent("show-toast", { detail: msg }));
 }
@@ -106,7 +97,6 @@ export default function Weather() {
   // not a location the user granted or chose. Drives the warning banner.
   const [usingDefault, setUsingDefault] = useState(false);
   const [selDay, setSelDay] = useState(0);
-  const [showReport, setShowReport] = useState(false);
   const [updatedAt, setUpdatedAt] = useState(null);
   const [offline, setOffline] = useState(
     typeof navigator !== "undefined" ? !navigator.onLine : false,
@@ -117,7 +107,6 @@ export default function Weather() {
   });
 
   const lang = currentLang();
-  const reportRef = useFocusTrap(showReport, () => setShowReport(false));
 
   useEffect(() => {
     try {
@@ -354,21 +343,6 @@ export default function Weather() {
     else requestLocation();
   };
 
-  const submitReport = useCallback((label) => {
-    // This POSTs nowhere - there is no endpoint for it - so the copy no longer
-    // claims it helps other farmers (audit item 22).
-    try {
-      const key = "ks_microclimate_reports";
-      const prev = JSON.parse(localStorage.getItem(key) || "[]");
-      prev.unshift({ label, city, ts: Date.now() });
-      localStorage.setItem(key, JSON.stringify(prev.slice(0, 20)));
-    } catch (e) {
-      /* ignore */
-    }
-    setShowReport(false);
-    toast("Noted on this device: " + label);
-  }, [city]);
-
   const current = data?.current;
   const daily = data?.daily;
   const needsLocation = !coords && !loading;
@@ -472,14 +446,6 @@ export default function Weather() {
                     : "Weather forecast loaded."
                 }
               />
-              <button
-                type="button"
-                className="btn btn-o btn-sm"
-                style={{ fontSize: "11px" }}
-                onClick={() => setShowReport(true)}
-              >
-                Report
-              </button>
               <a
                 href={`https://wa.me/?text=${encodeURIComponent(
                   `🌦️ AgroIntel Weather Alert for ${city || "My Location"}:\n• Temperature: ${Math.round(data.current.temperature_2m)}°C (${condLabel(effectiveCode(data.current.weathercode, data.current.precipitation, data.current.temperature_2m), lang)})\n• Humidity: ${Math.round(data.current.relative_humidity_2m)}%\n• Wind Speed: ${Math.round(data.current.wind_speed_10m || 0)} km/h\nShared via AgroIntel`
@@ -865,63 +831,6 @@ export default function Weather() {
               </p>
             )}
           </>
-        )}
-
-        {showReport && (
-          <div
-            className="modal-overlay fade-in"
-            onClick={() => setShowReport(false)}
-          >
-            <div
-              ref={reportRef}
-              className="card p3"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="wx-report-title"
-              style={{ maxWidth: "400px", width: "100%" }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex jcb aic" style={{ marginBottom: "4px" }}>
-                <h3
-                  id="wx-report-title"
-                  style={{ fontSize: "15px", fontWeight: 700, margin: 0 }}
-                >
-                  What is it like where you are?
-                </h3>
-                <button
-                  type="button"
-                  className="modal-close"
-                  aria-label="Close"
-                  onClick={() => setShowReport(false)}
-                >
-                  {"\u00D7"}
-                </button>
-              </div>
-              <p style={{ ...captionStyle, marginBottom: "12px" }}>
-                Saved on this device only, so you can compare it with the
-                forecast later. It is not sent anywhere yet.
-              </p>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "8px",
-                }}
-              >
-                {REPORT_OPTIONS.map((o) => (
-                  <button
-                    key={o}
-                    type="button"
-                    className="btn btn-o"
-                    style={{ fontSize: "12.5px", minHeight: "44px" }}
-                    onClick={() => submitReport(o)}
-                  >
-                    {o}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
         )}
       </div>
     </div>

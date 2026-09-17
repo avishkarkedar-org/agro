@@ -45,17 +45,15 @@ export default function CropPlanner() {
       month: "long",
     });
     const season = getSeasonName();
-    const question = `Based on ${soilType} soil, ${water} irrigation, ${fs} acres farm in ${currentMonth}/${season} season in Maharashtra India, what are the top 3 most profitable crops to grow? Give crop name, expected yield per acre, current market price, and estimated profit. Be specific with numbers.`;
+    const question = `As an expert Indian agronomist, based on ${soilType} soil, ${water} irrigation, and ${fs} acres farm in Maharashtra during ${currentMonth}/${season} season, recommend the top 3 most profitable crops to grow. For each, give crop name, expected yield per acre, approximate modal price in Maharashtra APMC, and estimated net profit. Provide specific, practical advice.`;
     try {
-      const r = await fetch(`${API}/api/crop-doctor`, {
+      const r = await fetch(`${API}/api/chat`, {
         method: "POST",
         signal: abortCtrlRef.current.signal,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          question,
-          crop: "General",
-          disease: "",
-          severity: "",
+          messages: [{ role: "user", content: question }],
+          lang: "en-IN",
           stream: true,
         }),
       });

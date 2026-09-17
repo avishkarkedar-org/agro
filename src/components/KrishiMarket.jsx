@@ -4,49 +4,6 @@ import { API } from "../context/SettingsContext";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { confirmAction } from "../utils/confirm";
 
-const FALLBACK_MARKET_POSTS = [
-  {
-    id: "sample-1",
-    title: "Selling 500kg Sharbati Premium Wheat",
-    body: "Price: ₹28/kg.\nContact: 9822012345\nLocation: Baramati, Pune\nOrganic certified MP Sharbati wheat, sorted and cleaned.",
-    author: "Suresh Patil",
-    loc: "Baramati, Pune",
-    tag: "Marketplace",
-    created_at: new Date().toISOString(),
-    isSample: true,
-  },
-  {
-    id: "sample-2",
-    title: "Selling 1200kg Red Nashik Onions",
-    body: "Price: ₹15/kg.\nContact: 9850123456\nLocation: Lasalgaon, Nashik\nMedium-bold quality, cured and ready for immediate loading.",
-    author: "Ramesh Shinde",
-    loc: "Lasalgaon, Nashik",
-    tag: "Marketplace",
-    created_at: new Date().toISOString(),
-    isSample: true,
-  },
-  {
-    id: "sample-3",
-    title: "Selling 400kg Bhagawa Pomegranate",
-    body: "Price: ₹95/kg.\nContact: 9423987654\nLocation: Sangola, Solapur\nDeep red arils, export grade (300g+ size).",
-    author: "Anand Deshmukh",
-    loc: "Sangola, Solapur",
-    tag: "Marketplace",
-    created_at: new Date().toISOString(),
-    isSample: true,
-  },
-  {
-    id: "sample-4",
-    title: "Selling 800kg Yellow Soybean (JS-335)",
-    body: "Price: ₹56/kg.\nContact: 9765432109\nLocation: Latur APMC Belt\n10% moisture, cleaned & bagged in 50kg sacks.",
-    author: "Ganesh Jadhav",
-    loc: "Latur",
-    tag: "Marketplace",
-    created_at: new Date().toISOString(),
-    isSample: true,
-  },
-];
-
 function KrishiMarket() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -60,15 +17,11 @@ function KrishiMarket() {
       .then((r) => r.json())
       .then((d) => {
         const livePosts = (d.posts || []).filter((p) => p.tag === "Marketplace");
-        if (livePosts.length > 0) {
-          setItems(livePosts);
-        } else {
-          setItems(FALLBACK_MARKET_POSTS);
-        }
+        setItems(livePosts);
         setLoading(false);
       })
       .catch(() => {
-        setItems(FALLBACK_MARKET_POSTS);
+        setItems([]);
         setLoading(false);
       });
   };
@@ -96,18 +49,21 @@ function KrishiMarket() {
     });
     if (!ok) return;
     try {
-      await fetch(`${API}/api/posts/${item.id}/sold`, {
+      const res = await fetch(`${API}/api/posts/${item.id}/sold`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ author: me }),
       });
+      if (!res.ok) {
+        throw new Error(`Failed to mark sold (${res.status})`);
+      }
       loadMarket();
       window.dispatchEvent(
         new CustomEvent("show-toast", { detail: "Marked as sold" }),
       );
     } catch (e) {
       window.dispatchEvent(
-        new CustomEvent("show-toast", { detail: "Could not mark as sold." }),
+        new CustomEvent("show-toast", { detail: "Could not mark as sold: " + e.message }),
       );
     }
   };
@@ -119,16 +75,19 @@ function KrishiMarket() {
     });
     if (!ok) return;
     try {
-      await fetch(`${API}/api/posts/${item.id}?author=${encodeURIComponent(me)}`, {
+      const res = await fetch(`${API}/api/posts/${item.id}?author=${encodeURIComponent(me)}`, {
         method: "DELETE",
       });
+      if (!res.ok) {
+        throw new Error(`Failed to delete listing (${res.status})`);
+      }
       loadMarket();
       window.dispatchEvent(
         new CustomEvent("show-toast", { detail: "Listing deleted" }),
       );
     } catch (e) {
       window.dispatchEvent(
-        new CustomEvent("show-toast", { detail: "Could not delete listing." }),
+        new CustomEvent("show-toast", { detail: "Could not delete listing: " + e.message }),
       );
     }
   };
@@ -140,7 +99,7 @@ function KrishiMarket() {
     );
     if (!ok) return;
     try {
-      await fetch(`${API}/api/bugs`, {
+      const res = await fetch(`${API}/api/bugs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -149,6 +108,9 @@ function KrishiMarket() {
           user_identifier: me || "Anonymous",
         }),
       });
+      if (!res.ok) {
+        throw new Error(`Failed to report (${res.status})`);
+      }
       window.dispatchEvent(
         new CustomEvent("show-toast", { detail: "Listing reported. Thank you." }),
       );
@@ -189,18 +151,22 @@ function KrishiMarket() {
         tag: "Marketplace",
         emoji: "🛒",
       };
+      let res;
       if (editingId) {
-        await fetch(`${API}/api/posts/${editingId}/edit`, {
+        res = await fetch(`${API}/api/posts/${editingId}/edit`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
       } else {
-        await fetch(`${API}/api/posts`, {
+        res = await fetch(`${API}/api/posts`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
+      }
+      if (!res.ok) {
+        throw new Error(`Error saving listing (${res.status})`);
       }
       setSellModal(false);
       setEditingId(null);
@@ -212,7 +178,7 @@ function KrishiMarket() {
       );
     } catch (e) {
       window.dispatchEvent(
-        new CustomEvent("show-toast", { detail: "Could not save listing." }),
+        new CustomEvent("show-toast", { detail: "Could not save listing: " + e.message }),
       );
     }
     setSubmitting(false);
@@ -231,7 +197,7 @@ function KrishiMarket() {
         <div className="flex aic gap2">
           <span className="card-title">🛒 AgroIntel Market</span>{" "}
           <span className="chip cg" style={{ fontSize: "9px" }}>
-            BETA
+            Direct Farmer Trade
           </span>
         </div>
         <button
@@ -257,7 +223,7 @@ function KrishiMarket() {
       </div>
       <div className="card-body">
         <p className="xs t2 mb2">
-          Buy and sell directly with other farmers. Zero commission.
+          Buy and sell produce directly with fellow farmers across Maharashtra. 0% commission.
         </p>
 
         {loading ? (
@@ -273,19 +239,33 @@ function KrishiMarket() {
           />
         ) : activeItems.length === 0 && soldItems.length === 0 ? (
           <div className="tc fade-in" style={{ padding: "30px 16px" }}>
-            <div style={{ fontSize: "40px", marginBottom: "10px" }}>🛒</div>
+            <div style={{ fontSize: "40px", marginBottom: "10px" }}>🌾</div>
             <p
               className="bold"
               style={{ fontSize: "15px", marginBottom: "6px" }}
             >
-              No Active Listings
+              No Harvest Listings Yet
             </p>
             <p
               className="xs t2"
               style={{ lineHeight: 1.5, marginBottom: "14px" }}
             >
-              Be the first farmer to list your crops for sale. Zero commission!
+              Be the first farmer to list your harvest directly to local buyers. 100% free!
             </p>
+            <button
+              className="btn btn-g btn-sm"
+              onClick={() => {
+                const u = safeGetLS("agrointel_user");
+                if (!u) {
+                  window.dispatchEvent(new CustomEvent("open-auth-modal"));
+                  return;
+                }
+                setUser(u);
+                setSellModal(true);
+              }}
+            >
+              + List Your Produce
+            </button>
           </div>
         ) : (
           <div
@@ -300,7 +280,7 @@ function KrishiMarket() {
             }}
           >
             {activeItems.map((item) => {
-              const priceMatch = item.body.match(/Price: ₹(\d+)/);
+              const priceMatch = item.body.match(/Price: ₹?(\d+)/);
               const cropMatch = item.title.match(/Selling \d+kg (.*)/);
               const pVal = priceMatch ? priceMatch[1] : "--";
               const cName = cropMatch ? cropMatch[1] : item.title;

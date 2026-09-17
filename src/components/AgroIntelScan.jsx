@@ -187,9 +187,10 @@ useEffect(() => {
 
     let uploadFile = file;
     try {
-      uploadFile = await compressImage(file);
+      const compressed = await compressImage(file);
+      if (compressed) uploadFile = compressed;
     } catch {
-      uploadFile = file;
+      // Keep original file if compression fails
     }
 
     try {

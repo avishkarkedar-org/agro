@@ -52,9 +52,7 @@ def _send_otp_email(to_email: str, otp: str) -> bool:
     body = (
         f"Namaste! \n\nYour AgroIntel verification code is: {otp}\n\n"
         "This code expires in 10 minutes. If you did not request it, "
-        "please ignore this email.\n\n- AgroIntel"
-        "\n\nIf any queries contact :- avishkarkedar@gmail.com ; +918432884424 "
-        "\n\nAlso you can visit https://avishkark.in for more info"
+        "please ignore this email.\n\n- Team AgroIntel"
     )
     
     body_html = f"""
@@ -79,16 +77,16 @@ def _send_otp_email(to_email: str, otp: str) -> bool:
                 <h1>AgroIntel</h1>
             </div>
             <div class="content">
-                <p>Namaste Kisaan Bhaiyo,</p>
-                <p>Here is your verification code. Enter this code to verify your email address and continue.</p>
+                <p>Namaste,</p>
+                <p>Here is your verification code. Enter this code to verify your account and continue.</p>
                 <div class="otp-box">
                     <p class="otp">{otp}</p>
                 </div>
                 <p style="font-size: 14px; color: #666;">This code will expire in 10 minutes. If you did not request this code, you can safely ignore this email.</p>
             </div>
             <div class="footer">
-                <p>For any queries, contact us at <a href="mailto:avishkarkedar@gmail.com">avishkarkedar@gmail.com</a> or +91 8432884424.</p>
-                <p>Visit our website: <a href="https://avishkark.in">avishkark.in</a></p>
+                <p>AgroIntel — Empowering Indian Agriculture</p>
+                <p>Official Portal: <a href="https://agrointel.pages.dev">agrointel.pages.dev</a></p>
             </div>
         </div>
     </body>

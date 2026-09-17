@@ -38,6 +38,8 @@ export default function YieldCalc() {
   const [acres, setAcres] = useState(
     () => safeGetLS("agrointel_acres") || "",
   );
+  const [expYield, setExpYield] = useState(() => String(CROP_DATA[crop]?.yield || 15));
+  const [expCost, setExpCost] = useState(() => String(CROP_DATA[crop]?.cost || 14000));
   const [res, setRes] = useState(null);
   const [livePrices, setLivePrices] = useState({});
   const [fertCost, setFertCost] = useState(5000);
@@ -95,17 +97,22 @@ export default function YieldCalc() {
     if (!a || a <= 0 || a > 10000 || !CROP_DATA[crop]) return;
     const d = CROP_DATA[crop];
 
+    const currentYield = parseFloat(expYield) > 0 ? parseFloat(expYield) : d.yield;
+    const currentCost = parseFloat(expCost) >= 0 ? parseFloat(expCost) : d.cost;
+
     const lp = getMatchedLivePrice(crop);
     let actualPrice = lp && !isNaN(lp) && lp > 0 ? lp : d.price;
 
     const safeFert = Math.max(0, parseFloat(fertCost) || 0);
-    const revenue = Math.round(d.yield * a * actualPrice);
-    const totalCost = Math.round(d.cost * a + safeFert);
+    const revenue = Math.round(currentYield * a * actualPrice);
+    const totalCost = Math.round(currentCost * a + safeFert);
     const profit = revenue - totalCost;
     setRes({
       revenue,
       profit,
       cost: totalCost,
+      yieldUsed: currentYield,
+      costUsed: currentCost,
       priceUsed: actualPrice,
       isLive: !!lp,
     });
@@ -219,9 +226,14 @@ export default function YieldCalc() {
                   value={crop}
                   id="yc-crop"
                   onChange={(e) => {
-                    setCrop(e.target.value);
+                    const c = e.target.value;
+                    setCrop(c);
+                    if (CROP_DATA[c]) {
+                      setExpYield(String(CROP_DATA[c].yield));
+                      setExpCost(String(CROP_DATA[c].cost));
+                    }
                     setRes(null);
-                    safeSetLS("agrointel_crop", e.target.value);
+                    safeSetLS("agrointel_crop", c);
                   }}
                 >
                   {Object.keys(CROP_DATA).map((c) => (
@@ -244,6 +256,52 @@ export default function YieldCalc() {
                   id="yc-acres"
                   placeholder="e.g. 2.5"
                 />
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "10px",
+                marginBottom: "15px",
+              }}
+            >
+              <div>
+                <label htmlFor="yc-yield">Expected Yield (Q/Acre)</label>
+                <input
+                  className="input"
+                  type="number"
+                  step="0.5"
+                  value={expYield}
+                  onChange={(e) => {
+                    setExpYield(e.target.value);
+                    setRes(null);
+                  }}
+                  id="yc-yield"
+                  placeholder="Quintals / acre"
+                />
+                <div className="mono t3 xs mt1" style={{ fontSize: "9px" }}>
+                  CACP Baseline: {CROP_DATA[crop]?.yield || 15} Q/Acre
+                </div>
+              </div>
+              <div>
+                <label htmlFor="yc-cost">Cultivation Cost (₹/Acre)</label>
+                <input
+                  className="input"
+                  type="number"
+                  step="500"
+                  value={expCost}
+                  onChange={(e) => {
+                    setExpCost(e.target.value);
+                    setRes(null);
+                  }}
+                  id="yc-cost"
+                  placeholder="₹ / acre"
+                />
+                <div className="mono t3 xs mt1" style={{ fontSize: "9px" }}>
+                  CACP Baseline: ₹{CROP_DATA[crop]?.cost?.toLocaleString("en-IN") || 14000}/Acre
+                </div>
               </div>
             </div>
             <div className="mb3">

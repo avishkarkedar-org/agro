@@ -296,31 +296,31 @@ async def scrape_agmarknet(state: str):
 
 def get_fallback_mandi(state: str):
     """
-    Returns realistic Maharashtra APMC reference prices (May 2026).
-    Used when all live sources are unavailable.
+    Returns Maharashtra APMC offline baseline reference prices.
+    Used when government live endpoints are temporarily unreachable.
     """
+    today_ts = datetime.now(timezone.utc).strftime("%d/%m/%Y 00:00")
     records = [
-        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Wheat", "variety": "Lok-1 / Sharbati", "grade": "FAQ", "arrival_date": datetime.now(timezone.utc).strftime("%d/%m/%Y"), "min_price": "2500", "modal_price": "2650", "max_price": "2850"},
-        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Rice", "variety": "Indrayani / Kolam", "grade": "Grade A", "arrival_date": datetime.now(timezone.utc).strftime("%d/%m/%Y"), "min_price": "3600", "modal_price": "4100", "max_price": "4600"},
-        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Maize", "variety": "Yellow", "grade": "FAQ", "arrival_date": datetime.now(timezone.utc).strftime("%d/%m/%Y"), "min_price": "2200", "modal_price": "2410", "max_price": "2600"},
-        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Soyabean", "variety": "Yellow", "grade": "FAQ", "arrival_date": datetime.now(timezone.utc).strftime("%d/%m/%Y"), "min_price": "5200", "modal_price": "5708", "max_price": "6100"},
-        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Tur Dal", "variety": "Local / Hybrid", "grade": "FAQ", "arrival_date": datetime.now(timezone.utc).strftime("%d/%m/%Y"), "min_price": "9500", "modal_price": "10200", "max_price": "11000"},
-        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Chana", "variety": "Desi", "grade": "FAQ", "arrival_date": datetime.now(timezone.utc).strftime("%d/%m/%Y"), "min_price": "5800", "modal_price": "6200", "max_price": "6700"},
-        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Onion", "variety": "Red Nashik", "grade": "Grade A", "arrival_date": datetime.now(timezone.utc).strftime("%d/%m/%Y"), "min_price": "500", "modal_price": "1994", "max_price": "2200"},
-        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Potato", "variety": "Jyoti", "grade": "Grade A", "arrival_date": datetime.now(timezone.utc).strftime("%d/%m/%Y"), "min_price": "1000", "modal_price": "1590", "max_price": "1900"},
-        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Tomato", "variety": "Hybrid", "grade": "Grade A", "arrival_date": datetime.now(timezone.utc).strftime("%d/%m/%Y"), "min_price": "1200", "modal_price": "2852", "max_price": "3100"},
-        {"state": state, "district": "Pune", "market": "Pune (Moshi)", "commodity": "Onion", "variety": "Red", "grade": "FAQ", "arrival_date": datetime.now(timezone.utc).strftime("%d/%m/%Y"), "min_price": "600", "modal_price": "1000", "max_price": "1400"},
-        {"state": state, "district": "Pune", "market": "Pune (Pimpri)", "commodity": "Onion", "variety": "Local", "grade": "FAQ", "arrival_date": datetime.now(timezone.utc).strftime("%d/%m/%Y"), "min_price": "600", "modal_price": "1200", "max_price": "1800"},
-        {"state": state, "district": "Pune", "market": "Pune (Moshi)", "commodity": "Tomato", "variety": "Deshi", "grade": "FAQ", "arrival_date": datetime.now(timezone.utc).strftime("%d/%m/%Y"), "min_price": "2500", "modal_price": "2750", "max_price": "3000"},
-        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Soybean", "variety": "Yellow", "grade": "FAQ", "arrival_date": datetime.now(timezone.utc).strftime("%d/%m/%Y"), "min_price": "5500", "modal_price": "5700", "max_price": "6000"},
-        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Cotton", "variety": "Long Staple", "grade": "FAQ", "arrival_date": datetime.now(timezone.utc).strftime("%d/%m/%Y"), "min_price": "8000", "modal_price": "8500", "max_price": "9000"},
-        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Groundnut", "variety": "Bold", "grade": "FAQ", "arrival_date": datetime.now(timezone.utc).strftime("%d/%m/%Y"), "min_price": "6800", "modal_price": "7517", "max_price": "8200"},
-        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Mustard", "variety": "Yellow", "grade": "FAQ", "arrival_date": datetime.now(timezone.utc).strftime("%d/%m/%Y"), "min_price": "5400", "modal_price": "5900", "max_price": "6300"},
-        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Moong Dal", "variety": "Local", "grade": "FAQ", "arrival_date": datetime.now(timezone.utc).strftime("%d/%m/%Y"), "min_price": "8000", "modal_price": "8800", "max_price": "9500"},
-        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Ginger", "variety": "Fresh", "grade": "Grade A", "arrival_date": datetime.now(timezone.utc).strftime("%d/%m/%Y"), "min_price": "3800", "modal_price": "4500", "max_price": "5500"},
+        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Wheat", "variety": "Lok-1 / Sharbati", "grade": "FAQ", "arrival_date": today_ts, "min_price": "2500", "modal_price": "2650", "max_price": "2850"},
+        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Rice", "variety": "Indrayani / Kolam", "grade": "Grade A", "arrival_date": today_ts, "min_price": "3600", "modal_price": "4100", "max_price": "4600"},
+        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Maize", "variety": "Yellow", "grade": "FAQ", "arrival_date": today_ts, "min_price": "2200", "modal_price": "2410", "max_price": "2600"},
+        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Soyabean", "variety": "Yellow", "grade": "FAQ", "arrival_date": today_ts, "min_price": "5200", "modal_price": "5708", "max_price": "6100"},
+        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Tur Dal", "variety": "Local / Hybrid", "grade": "FAQ", "arrival_date": today_ts, "min_price": "9500", "modal_price": "10200", "max_price": "11000"},
+        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Chana", "variety": "Desi", "grade": "FAQ", "arrival_date": today_ts, "min_price": "5800", "modal_price": "6200", "max_price": "6700"},
+        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Onion", "variety": "Red Nashik", "grade": "Grade A", "arrival_date": today_ts, "min_price": "500", "modal_price": "1994", "max_price": "2200"},
+        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Potato", "variety": "Jyoti", "grade": "Grade A", "arrival_date": today_ts, "min_price": "1000", "modal_price": "1590", "max_price": "1900"},
+        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Tomato", "variety": "Hybrid", "grade": "Grade A", "arrival_date": today_ts, "min_price": "1200", "modal_price": "2852", "max_price": "3100"},
+        {"state": state, "district": "Pune", "market": "Pune (Moshi)", "commodity": "Onion", "variety": "Red", "grade": "FAQ", "arrival_date": today_ts, "min_price": "600", "modal_price": "1000", "max_price": "1400"},
+        {"state": state, "district": "Pune", "market": "Pune (Pimpri)", "commodity": "Onion", "variety": "Local", "grade": "FAQ", "arrival_date": today_ts, "min_price": "600", "modal_price": "1200", "max_price": "1800"},
+        {"state": state, "district": "Pune", "market": "Pune (Moshi)", "commodity": "Tomato", "variety": "Deshi", "grade": "FAQ", "arrival_date": today_ts, "min_price": "2500", "modal_price": "2750", "max_price": "3000"},
+        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Soybean", "variety": "Yellow", "grade": "FAQ", "arrival_date": today_ts, "min_price": "5500", "modal_price": "5700", "max_price": "6000"},
+        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Cotton", "variety": "Long Staple", "grade": "FAQ", "arrival_date": today_ts, "min_price": "8000", "modal_price": "8500", "max_price": "9000"},
+        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Groundnut", "variety": "Bold", "grade": "FAQ", "arrival_date": today_ts, "min_price": "6800", "modal_price": "7517", "max_price": "8200"},
+        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Mustard", "variety": "Yellow", "grade": "FAQ", "arrival_date": today_ts, "min_price": "5400", "modal_price": "5900", "max_price": "6300"},
+        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Moong Dal", "variety": "Local", "grade": "FAQ", "arrival_date": today_ts, "min_price": "8000", "modal_price": "8800", "max_price": "9500"},
+        {"state": state, "district": "Pune", "market": "Pune APMC", "commodity": "Ginger", "variety": "Fresh", "grade": "Grade A", "arrival_date": today_ts, "min_price": "3800", "modal_price": "4500", "max_price": "5500"},
     ]
-    # Use 'source' key (not 'status') so admin task result shows 'fallback' correctly
-    return {"records": records, "source": "fallback", "note": "Reference prices \u2014 June 10 2026 Maharashtra APMC + MSP 2026-27"}
+    return {"records": records, "source": "fallback", "note": "Offline reference baseline (Agmarknet Pune APMC)"}
 
 
 _mandi_cache = cachetools.TTLCache(maxsize=100, ttl=3600)
@@ -478,7 +478,7 @@ def _to_num(v):
         return None
 
 
-def record_mandi_snapshot(result: dict):
+async def record_mandi_snapshot(result: dict):
     # Persist today's modal prices to mandi_history (one row per commodity+market+day).
     # Best-effort: never raises. Called by the scheduler so the 7-day chart uses REAL data.
     if not supabase:
@@ -517,7 +517,7 @@ def record_mandi_snapshot(result: dict):
             logger.info("mandi_history: stored " + str(len(rows)) + " snapshots for " + today)
             for r in rows:
                 if r.get("commodity") and r.get("modal_price"):
-                    send_onesignal_price_alert(r["commodity"], r["modal_price"], r.get("market", ""))
+                    await send_onesignal_price_alert(r["commodity"], r["modal_price"], r.get("market", ""))
     except Exception as e:
         logger.warning("record_mandi_snapshot failed: " + str(e))
 
@@ -553,39 +553,10 @@ async def mandi_history(req: Request, commodity: str, days: int = 7):
         ]
         series = series[-days:]
 
-        if len(series) < 2:
-            base_price = 2500
-            if series:
-                base_price = series[-1]["price"]
-            else:
-                try:
-                    c_resp = supabase.table("mandi_cache").select("modal_price").ilike("commodity", safe_commodity).limit(1).execute()
-                    if c_resp.data and c_resp.data[0].get("modal_price"):
-                        base_price = float(c_resp.data[0]["modal_price"])
-                except Exception:
-                    pass
-            offsets = [-0.02, 0.015, -0.008, 0.022, -0.01, 0.005, 0]
-            today_dt = datetime.now(timezone.utc)
-            series = [
-                {
-                    "date": (today_dt - timedelta(days=days - 1 - i)).strftime("%Y-%m-%d"),
-                    "price": round(base_price * (1 + offsets[i % len(offsets)]))
-                }
-                for i in range(days)
-            ]
         return {"commodity": commodity, "history": series}
     except Exception as e:
         logger.warning("mandi_history failed: " + str(e))
-        today_dt = datetime.now(timezone.utc)
-        offsets = [-0.02, 0.015, -0.008, 0.022, -0.01, 0.005, 0]
-        series = [
-            {
-                "date": (today_dt - timedelta(days=days - 1 - i)).strftime("%Y-%m-%d"),
-                "price": round(2500 * (1 + offsets[i % len(offsets)]))
-            }
-            for i in range(days)
-        ]
-        return {"commodity": commodity, "history": series}
+        return {"commodity": commodity, "history": []}
 
 
 # Live News

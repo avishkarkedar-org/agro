@@ -25,6 +25,7 @@ const SETTINGS_CACHE_KEY = "agrointel_settings_cache";
 const POLL_MS = 60000;
 const FETCH_TIMEOUT_MS = 25000;
 const RETRY_DELAY_MS = 3000;
+const FOCUS_DEBOUNCE_MS = 5 * 60 * 1000; // 5 minutes
 
 // Settings the UI always treats as lists. Anything else (null, undefined, or the
 // JSONB '{}' default) is coerced to an empty array so callers can rely on
@@ -71,7 +72,6 @@ export function SettingsProvider({ children }) {
   // 5 minutes minimum between reactive fetches; the scheduled poll still runs
   // every 60 s independently (it already guards document.visibilityState).
   const lastFetch = useRef(0);
-  const FOCUS_DEBOUNCE_MS = 5 * 60 * 1000; // 5 minutes
 
   const checkPremium = () => {
     try {

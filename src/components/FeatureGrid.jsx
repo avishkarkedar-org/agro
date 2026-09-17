@@ -139,19 +139,19 @@ function FeatureGrid({ activeTab = "home" }) {
     return Array.isArray(settings?.feature_order) && settings.feature_order.length > 0
       ? settings.feature_order
       : null;
-  }, [settings?.feature_order]);
+  }, [settings]);
 
   const loginRequired = useMemo(() => {
     return Array.isArray(settings?.login_required_features)
       ? settings.login_required_features
       : [];
-  }, [settings?.login_required_features]);
+  }, [settings]);
 
   const disabled = useMemo(() => {
     return Array.isArray(settings?.disabled_features)
       ? settings.disabled_features
       : [];
-  }, [settings?.disabled_features]);
+  }, [settings]);
 
   useEffect(() => {
     const handler = () => setUser(safeGetLS("agrointel_user"));

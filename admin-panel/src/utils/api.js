@@ -9,7 +9,7 @@ export async function api(endpoint, options = {}) {
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
   const res = await fetch(`${API}${endpoint}`, { ...options, headers });
-  if (res.status === 401 || res.status === 403) {
+  if (res.status === 401) {
     if (endpoint !== "/api/admin/login") {
       localStorage.removeItem("admin_token");
       window.location.href = "/login";

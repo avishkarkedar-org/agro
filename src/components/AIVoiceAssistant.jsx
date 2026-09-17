@@ -17,7 +17,7 @@ const T = {
     interrupt: "Speaking… Tap to interrupt",
     thinking: "Thinking…",
     clear: "Clear",
-    hint: "Ask about weather, mandi prices, crops, schemes, fuel…",
+    hint: "Ask about weather, mandi prices, crops, schemes, soil health…",
     micErr: "Microphone error. Please try again or type below.",
     offline: "Sorry, I am having trouble connecting right now.",
     you: "You",
@@ -77,6 +77,7 @@ export default function AIVoiceAssistant() {
   const [isThinking, setIsThinking] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [inputText, setInputText] = useState("");
+  const [messages, setMessages] = useState([]);
   const [error, setError] = useState("");
   const getInitialLang = () => {
     const savedVoice = safeGetLS("ks_voice_lang");
@@ -147,6 +148,8 @@ export default function AIVoiceAssistant() {
     };
   }, []);
 
+  const processSpeechQueueRef = useRef(null);
+
   // Sequential speech queue runner to prevent cutting off speech
   const processSpeechQueue = useCallback(() => {
     const synth = synthRef.current;
@@ -185,7 +188,7 @@ export default function AIVoiceAssistant() {
       const handleDone = () => {
         isSpeakingRef.current = false;
         if (speechQueueRef.current.length > 0) {
-          processSpeechQueue();
+          if (processSpeechQueueRef.current) processSpeechQueueRef.current();
         } else {
           setIsSpeaking(false);
         }
@@ -201,13 +204,17 @@ export default function AIVoiceAssistant() {
     }
   }, [lang, settings]);
 
+  useEffect(() => {
+    processSpeechQueueRef.current = processSpeechQueue;
+  }, [processSpeechQueue]);
+
   const speak = useCallback(
     (text) => {
       if (!text || typeof window === "undefined" || !window.speechSynthesis) return;
       speechQueueRef.current.push(text);
-      processSpeechQueue();
+      if (processSpeechQueueRef.current) processSpeechQueueRef.current();
     },
-    [processSpeechQueue]
+    []
   );
 
   const stopSpeaking = useCallback(() => {
@@ -265,13 +272,6 @@ export default function AIVoiceAssistant() {
               .map((m) => `${m.crop || m.name}: ₹${m.price}/${m.unit || "quintal"} (${m.market || "APMC"})`)
               .join(", ");
             _ctxParts.push(`Live Mandi Prices: ${mSummary}`);
-          }
-        } catch (_e) {}
-
-        try {
-          const fuelRates = settings?.fuel_prices;
-          if (fuelRates && (fuelRates.diesel || fuelRates.petrol)) {
-            _ctxParts.push(`Fuel rates in Maharashtra: Diesel ₹${fuelRates.diesel || 89.5}/L, Petrol ₹${fuelRates.petrol || 104.5}/L`);
           }
         } catch (_e) {}
 

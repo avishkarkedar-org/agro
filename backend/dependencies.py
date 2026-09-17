@@ -194,7 +194,7 @@ def _get_client_ip(req: Request) -> str:
 _rate_limit_config_cache = {"max_req": 20, "window": 60, "ts": 0}
 _banned_ips_cache = {"ips": set(), "ts": 0}
 
-def rate_limit(req: Request, max_req: int = 20, window: int = 60, bucket: str = None):
+def rate_limit(req: Request, max_req: Optional[int] = None, window: Optional[int] = None, bucket: Optional[str] = None):
     # 1. Admin Bypass: If the user is an admin, do not rate-limit them at all.
     auth_header = req.headers.get("Authorization", "")
     if auth_header.startswith("Bearer "):
@@ -217,10 +217,10 @@ def rate_limit(req: Request, max_req: int = 20, window: int = 60, bucket: str = 
         bucket = f"{req.method}_{req.url.path}"
     rate_key = f"{client_ip}_{bucket}"
     
-    # 3. Enforce dynamic Rate Limit Configurator
-    if max_req == 20:
+    # 3. Enforce dynamic Rate Limit Configurator if not explicitly specified
+    if max_req is None:
         max_req = _rate_limit_config_cache.get("max_req", 20)
-    if window == 60:
+    if window is None:
         window = _rate_limit_config_cache.get("window", 60)
     
     with _rate_limit_lock:
@@ -394,7 +394,7 @@ async def background_data_fetcher():
                     await fetch_news_data()
                     mandi_result = await fetch_mandi_data(state="Maharashtra", limit=500)
                     if isinstance(mandi_result, dict) and mandi_result.get("source") == "live":
-                        record_mandi_snapshot(mandi_result)
+                        await record_mandi_snapshot(mandi_result)
                     await fetch_fuel_data(city="Pune")
                     await fetch_fuel_data(city="Mumbai")
                     await fetch_fuel_data(city="Delhi")
@@ -633,6 +633,8 @@ def check_superadmin(request: Request, credentials: HTTPAuthorizationCredentials
     user = check_admin(request, credentials)
     if user.get("role") != "superadmin":
         raise HTTPException(status_code=403, detail="Superadmin privileges required")
+    return user
+
 def log_audit(admin_username: str, action: str, details: dict = None):
     if not supabase: return
     try:
@@ -646,7 +648,7 @@ def log_audit(admin_username: str, action: str, details: dict = None):
     except Exception as e:
         logger.error(f"Audit log error: {e}")
 
-def send_onesignal_price_alert(commodity: str, modal_price: float, market: str = ""):
+async def send_onesignal_price_alert(commodity: str, modal_price: float, market: str = ""):
     """
     Sends a targeted push notification via OneSignal ONLY to devices
     that have tagged 'alert_{clean_commodity}' <= modal_price.
@@ -667,10 +669,10 @@ def send_onesignal_price_alert(commodity: str, modal_price: float, market: str =
             ],
             "headings": {"en": f"🌾 {commodity} Target Reached!"},
             "contents": {"en": f"{commodity} at {market or 'Mandi'} reached ₹{int(modal_price):,}/q. Your target alert was triggered!"},
-            "url": "https://agro.avishkark.in/?tab=mandi"
+            "url": "https://agrointel.pages.dev/?tab=mandi"
         }
-        with httpx.Client(timeout=6) as client:
-            resp = client.post(url, headers=headers, json=payload)
+        async with httpx.AsyncClient(timeout=6) as client:
+            resp = await client.post(url, headers=headers, json=payload)
             logger.info(f"OneSignal targeted push for {commodity} returned status {resp.status_code}")
             return resp.status_code
     except Exception as e:
