@@ -633,7 +633,18 @@ def check_superadmin(request: Request, credentials: HTTPAuthorizationCredentials
     user = check_admin(request, credentials)
     if user.get("role") != "superadmin":
         raise HTTPException(status_code=403, detail="Superadmin privileges required")
-    return user
+def log_audit(admin_username: str, action: str, details: dict = None):
+    if not supabase: return
+    try:
+        log_entry = {
+            "admin_username": admin_username,
+            "action": action,
+            "details": details or {},
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        supabase.table("audit_logs").insert(log_entry).execute()
+    except Exception as e:
+        logger.error(f"Audit log error: {e}")
 
 def send_onesignal_price_alert(commodity: str, modal_price: float, market: str = ""):
     """

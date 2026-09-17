@@ -4,7 +4,7 @@
  */
 
 export const ONESIGNAL_APP_ID =
-  import.meta.env.VITE_ONESIGNAL_APP_ID || "b2316e6d-5555-4a67-8e6f-placeholder";
+  import.meta.env.VITE_ONESIGNAL_APP_ID || "709aeb4a-5b3a-4b41-b3a9-35e48a4db552";
 
 let initialized = false;
 
