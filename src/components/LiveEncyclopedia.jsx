@@ -398,12 +398,45 @@ function LiveEncyclopedia() {
               </div>
             ))}
             {!loading && results.length === 0 && search && (
-              <div className="xs t3 tc">No results found on Wikipedia.</div>
+              <div className="xs t3 tc p3">No results found on Wikipedia. Try another search term.</div>
             )}
             {!loading && !search && results.length === 0 && (
-              <div className="xs t3 tc" style={{ padding: "20px" }}>
-                Search for any crop disease (e.g., "Late Blight", "Wheat Rust").
-                Data is fetched live from Wikipedia.
+              <div style={{ padding: "10px 0" }}>
+                <p className="xs t2 mb2">
+                  💡 Explore common plant diseases and agronomic pathogens with verified Wikipedia extracts, high-resolution galleries, and audio narration:
+                </p>
+                <div className="flex gap2 wrap">
+                  {[
+                    "Late Blight",
+                    "Wheat Rust",
+                    "Powdery Mildew",
+                    "Rice Blast",
+                    "Bacterial Blight",
+                    "Downy Mildew",
+                    "Citrus Canker",
+                    "Fusarium Wilt",
+                    "Anthracnose",
+                    "Sigatoka Leaf Spot",
+                    "Early Blight",
+                    "Clubroot",
+                  ].map((dName) => (
+                    <button
+                      key={dName}
+                      onClick={() => {
+                        setSearch(dName);
+                        doSearch(dName);
+                      }}
+                      className="btn btn-sm btn-o"
+                      style={{
+                        fontSize: "11px",
+                        padding: "4px 8px",
+                        borderRadius: "6px",
+                      }}
+                    >
+                      🌿 {dName}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>

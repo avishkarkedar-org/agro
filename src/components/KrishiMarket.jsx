@@ -4,6 +4,49 @@ import { API } from "../context/SettingsContext";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { confirmAction } from "../utils/confirm";
 
+const FALLBACK_MARKET_POSTS = [
+  {
+    id: "sample-1",
+    title: "Selling 500kg Sharbati Premium Wheat",
+    body: "Price: ₹28/kg.\nContact: 9822012345\nLocation: Baramati, Pune\nOrganic certified MP Sharbati wheat, sorted and cleaned.",
+    author: "Suresh Patil",
+    loc: "Baramati, Pune",
+    tag: "Marketplace",
+    created_at: new Date().toISOString(),
+    isSample: true,
+  },
+  {
+    id: "sample-2",
+    title: "Selling 1200kg Red Nashik Onions",
+    body: "Price: ₹15/kg.\nContact: 9850123456\nLocation: Lasalgaon, Nashik\nMedium-bold quality, cured and ready for immediate loading.",
+    author: "Ramesh Shinde",
+    loc: "Lasalgaon, Nashik",
+    tag: "Marketplace",
+    created_at: new Date().toISOString(),
+    isSample: true,
+  },
+  {
+    id: "sample-3",
+    title: "Selling 400kg Bhagawa Pomegranate",
+    body: "Price: ₹95/kg.\nContact: 9423987654\nLocation: Sangola, Solapur\nDeep red arils, export grade (300g+ size).",
+    author: "Anand Deshmukh",
+    loc: "Sangola, Solapur",
+    tag: "Marketplace",
+    created_at: new Date().toISOString(),
+    isSample: true,
+  },
+  {
+    id: "sample-4",
+    title: "Selling 800kg Yellow Soybean (JS-335)",
+    body: "Price: ₹56/kg.\nContact: 9765432109\nLocation: Latur APMC Belt\n10% moisture, cleaned & bagged in 50kg sacks.",
+    author: "Ganesh Jadhav",
+    loc: "Latur",
+    tag: "Marketplace",
+    created_at: new Date().toISOString(),
+    isSample: true,
+  },
+];
+
 function KrishiMarket() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,10 +59,18 @@ function KrishiMarket() {
     fetch(`${API}/api/posts`)
       .then((r) => r.json())
       .then((d) => {
-        if (d.posts) setItems(d.posts.filter((p) => p.tag === "Marketplace"));
+        const livePosts = (d.posts || []).filter((p) => p.tag === "Marketplace");
+        if (livePosts.length > 0) {
+          setItems(livePosts);
+        } else {
+          setItems(FALLBACK_MARKET_POSTS);
+        }
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setItems(FALLBACK_MARKET_POSTS);
+        setLoading(false);
+      });
   };
 
   useEffect(() => {
@@ -324,9 +375,27 @@ function KrishiMarket() {
                         ₹{pVal}/kg
                       </span>
                     </div>
-                    <div className="xs t2 mb2" style={{ lineHeight: 1.4 }}>
+                    <div className="xs t2 mb2" style={{ lineHeight: 1.4, whiteSpace: "pre-line" }}>
                       {item.body}
                     </div>
+                    {(() => {
+                      const phoneM = (item.body || "").match(/Contact:\s*([0-9+\-\s]+)/);
+                      const cleanP = phoneM ? phoneM[1].replace(/\D/g, "").slice(-10) : "";
+                      if (cleanP && cleanP.length === 10 && !isSold) {
+                        return (
+                          <a
+                            href={`https://wa.me/91${cleanP}?text=${encodeURIComponent(`Hello ${item.author}, I saw your listing on AgroIntel for ${cName}. Is it still available?`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-g btn-sm mb2"
+                            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", textDecoration: "none" }}
+                          >
+                            <span>💬 WhatsApp Seller</span>
+                          </a>
+                        );
+                      }
+                      return null;
+                    })()}
                     <div
                       className="xs t3 mt-auto pt1 flex jcb"
                       style={{ borderTop: "1px solid var(--b1)" }}

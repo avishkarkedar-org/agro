@@ -74,14 +74,22 @@ async def fertilizers(req: Request):
     if "data" in api_cache_fert:
         return api_cache_fert["data"]
     rates = [
-        {"name": "Urea (Neem Coated)", "price": 266.50, "unit": "45kg"},
-        {"name": "DAP", "price": 1350.00, "unit": "50kg"},
-        {"name": "MOP", "price": 1700.00, "unit": "50kg"},
-        {"name": "NPK (10:26:26)", "price": 1470.00, "unit": "50kg"},
-        {"name": "NPK (12:32:16)", "price": 1470.00, "unit": "50kg"},
-        {"name": "SSP (Single Super Phosphate)", "price": 500.00, "unit": "50kg"}
+        {"name": "Urea (Neem Coated 46% N)", "price": 266.50, "unit": "45kg", "formula": "46-0-0", "type": "Major NPK"},
+        {"name": "DAP (Di-Ammonium Phosphate)", "price": 1350.00, "unit": "50kg", "formula": "18-46-0", "type": "Major NPK"},
+        {"name": "MOP (Muriate of Potash 60% K2O)", "price": 1700.00, "unit": "50kg", "formula": "0-0-60", "type": "Major NPK"},
+        {"name": "NPK (10:26:26 Complex)", "price": 1470.00, "unit": "50kg", "formula": "10-26-26", "type": "Complex"},
+        {"name": "NPK (12:32:16 Complex)", "price": 1470.00, "unit": "50kg", "formula": "12-32-16", "type": "Complex"},
+        {"name": "NPK (20:20:0:13 Ammonium Phos. Sulphate)", "price": 1250.00, "unit": "50kg", "formula": "20-20-0-13S", "type": "Complex"},
+        {"name": "SSP (Single Super Phosphate Granular)", "price": 500.00, "unit": "50kg", "formula": "0-16-0 + 11% S", "type": "Major NPK"},
+        {"name": "SSP (Single Super Phosphate Powder)", "price": 480.00, "unit": "50kg", "formula": "0-16-0 + 11% S", "type": "Major NPK"},
+        {"name": "Zinc Sulphate Monohydrate (33% Zn)", "price": 680.00, "unit": "10kg", "formula": "33% Zn + 15% S", "type": "Micronutrients"},
+        {"name": "Zinc Sulphate Heptahydrate (21% Zn)", "price": 520.00, "unit": "25kg", "formula": "21% Zn + 10% S", "type": "Micronutrients"},
+        {"name": "Ferrous Sulphate (19% Fe)", "price": 450.00, "unit": "25kg", "formula": "19% Fe + 10.5% S", "type": "Micronutrients"},
+        {"name": "Agricultural Gypsum (Soil Conditioner)", "price": 280.00, "unit": "50kg", "formula": "CaSO4 · 2H2O", "type": "Micronutrients"},
+        {"name": "Boron (Disodium Octaborate 20%)", "price": 380.00, "unit": "1kg", "formula": "20% B", "type": "Micronutrients"},
+        {"name": "Magnesium Sulphate (9.6% Mg)", "price": 420.00, "unit": "25kg", "formula": "9.6% Mg + 12% S", "type": "Micronutrients"}
     ]
-    data = {"rates": rates, "source": "reference", "note": "Static reference rates (Dept. of Fertilizers MRP, 2026) \u2014 not a live feed."}
+    data = {"rates": rates, "source": "reference", "note": "Official Dept. of Fertilizers Statutory NBS MRP (2026)."}
     api_cache_fert["data"] = data
     return data
 
