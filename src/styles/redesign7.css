@@ -168,13 +168,7 @@ html.light .card:hover {
 }
 
 /* ─── 6. TAB CONTENT — DEDICATED TABS FILL SCREEN ───────────── */
-/* Weather, Mandi, Scan tabs should expand to fill available space */
-@media (max-width: 899px) {
-  /* The wrapper div FeatureGrid renders for non-home tabs */
-  .tab-content-enter > div {
-    min-height: calc(100dvh - 130px) !important;
-  }
-}
+/* Removed: individual feature wrappers handle their own min-height when needed */
 
 /* ─── 7. NEWS TICKER — TIGHTER ON MOBILE ────────────────────── */
 @media (max-width: 600px) {
