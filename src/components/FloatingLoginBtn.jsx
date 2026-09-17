@@ -52,22 +52,25 @@ export default function FloatingLoginBtn({ onLogin, onAccessCode }) {
 
   if (dismissed) return null;
   return (
-    <div
-      style={{
-        position: "fixed",
-        left: "50%",
-        // BOTTOM_NAV_CLEAR_R201: raised from 96px to 155px so this card
-        // doesn't overlap the scan button which protrudes ~22px above the
-        // 64px nav bar. Also keeps it away from the AI voice FAB at right:18px.
-        bottom: "calc(152px + env(safe-area-inset-bottom, 0px))",
-        transform: "translateX(-50%)",
-        zIndex: 150,
-        animation: "slide-up 0.4s ease",
-        width: "min(280px, calc(100vw - 48px))",
-        // Hide on very small screens — too much clutter
-        pointerEvents: "auto",
-      }}
-    >
+    <>
+      <style>{`
+        .floating-login-card {
+          position: fixed;
+          left: 50%;
+          bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+          transform: translateX(-50%);
+          z-index: 150;
+          animation: slide-up 0.4s ease;
+          width: min(290px, calc(100vw - 48px));
+          pointer-events: auto;
+        }
+        @media (min-width: 900px) {
+          .floating-login-card {
+            display: none !important;
+          }
+        }
+      `}</style>
+      <div className="floating-login-card">
       <div
         style={{
           background: "var(--s1)",
@@ -130,5 +133,6 @@ export default function FloatingLoginBtn({ onLogin, onAccessCode }) {
         </div>
       </div>
     </div>
+    </>
   );
 }

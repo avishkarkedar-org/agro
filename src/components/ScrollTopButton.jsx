@@ -15,33 +15,43 @@ export default function ScrollTopButton() {
 
   if (!visible) return null;
 
-  const btnStyle = {
-    position: "fixed",
-    left: 16,
-    // BOTTOM_NAV_CLEAR_R201: on mobile the bottom nav is 64px + safe area.
-    // Raise the scroll button above it so it's never hidden behind the bar.
-    bottom: "calc(72px + env(safe-area-inset-bottom, 0px))",
-    zIndex: 490, // below BottomNav (500) but above most content
-    width: 44,
-    height: 44,
-    borderRadius: 999,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: 20,
-    padding: 0,
-  };
-
-
   return (
-    <button
-      className="btn btn-o"
-      style={btnStyle}
-      aria-label="Back to top"
-      title="Scroll to top"
-      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-    >
-      ↑
-    </button>
+    <>
+      <style>{`
+        .scroll-top-fab {
+          position: fixed;
+          left: 16px;
+          bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+          z-index: 490;
+          width: 44px;
+          height: 44px;
+          border-radius: 999px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 20px;
+          padding: 0;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+          transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+        .scroll-top-fab:hover {
+          transform: translateY(-2px);
+        }
+        @media (min-width: 900px) {
+          .scroll-top-fab {
+            bottom: 28px;
+            left: 28px;
+          }
+        }
+      `}</style>
+      <button
+        className="btn btn-o scroll-top-fab"
+        aria-label="Back to top"
+        title="Scroll to top"
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      >
+        ↑
+      </button>
+    </>
   );
 }

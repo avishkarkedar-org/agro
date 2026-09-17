@@ -537,15 +537,15 @@ export default function AIVoiceAssistant() {
   return (
     <>
       <style>{`
-        /* BOTTOM_NAV_CLEAR_R201: raised from 96px to 160px so the voice FAB
-         * clears the 64px nav bar + 22px scan button protrusion + safe area.
-         * On desktop (≥769px) it drops back to 24px since nav bar hides. */
-        .ksv-fab{position:fixed;bottom:calc(160px + env(safe-area-inset-bottom));right:18px;z-index:300;width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(145deg,#4ade80,#15803d);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.35);transition:transform .2s ease, box-shadow .2s ease;}
+        /* Voice Assistant Floating Action Button placement:
+         * Mobile: sits comfortably above the 64px bottom nav bar (88px + safe-area).
+         * Desktop: docks neatly in bottom-right corner (28px). */
+        .ksv-fab{position:fixed;bottom:calc(88px + env(safe-area-inset-bottom, 0px));right:16px;z-index:300;width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(145deg,#4ade80,#15803d);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.35);transition:transform .2s ease, box-shadow .2s ease;}
 
         .ksv-fab:hover{transform:scale(1.06);box-shadow:0 10px 26px rgba(0,0,0,.4);}
         .ksv-fab:active{transform:scale(.94);}
         .ksv-fab .ksv-logo-svg{width:28px;height:28px;}
-        @media (min-width:769px){.ksv-fab{bottom:24px;}}
+        @media (min-width:900px){.ksv-fab{bottom:28px;right:28px;}}
         .ksv-overlay{position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;animation:ksvFade .25s ease forwards;}
         .ksv-card{width:100%;max-width:440px;background:var(--clay-surface,#14201a);color:var(--text,#fff);border-radius:26px;padding:18px 18px 20px;box-shadow:8px 8px 24px rgba(0,0,0,.6),-6px -6px 18px rgba(255,255,255,.03);opacity:0;animation:ksvPop .35s cubic-bezier(.16,1,.3,1) forwards;display:flex;flex-direction:column;max-height:90vh;}
         @keyframes ksvFade{to{opacity:1;}}

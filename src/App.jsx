@@ -20,6 +20,7 @@ import ConfirmHost from "./components/ConfirmHost";
 import ScrollTopButton from "./components/ScrollTopButton";
 import CookieConsent from "./components/CookieConsent";
 import BottomNav from "./components/BottomNav";
+import DesktopNav from "./components/DesktopNav";
 
 
 // APP_SHELL_SPLIT_R117
@@ -538,7 +539,16 @@ export default function App() {
                 <line x1="4" x2="20" y1="18" y2="18"/>
               </svg>
             </button>
-            <div className="logo notranslate" role="banner" aria-label="AgroIntel Home">
+            <div
+              className="logo notranslate"
+              role="banner"
+              aria-label="AgroIntel Home"
+              onClick={() => {
+                setActiveTab("home");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              style={{ cursor: "pointer" }}
+            >
               <div
                 className="logo-icon"
                 style={{
@@ -569,6 +579,19 @@ export default function App() {
               </div>
             </div>
           </div>
+
+          {/* Desktop primary navigation bar */}
+          <DesktopNav
+            activeTab={activeTab}
+            onTabChange={(tab) => {
+              setActiveTab(tab);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            isLoggedIn={isLoggedIn}
+            onOpenProfile={() => setProfileModalOpen(true)}
+            onOpenAuth={() => setAuthModalOpen(true)}
+          />
+
           <div className="header-right">
             <LangSwitcher />
           </div>
@@ -652,16 +675,20 @@ export default function App() {
           border-top-color: var(--green, #34d399);
           border-radius: 50%;
         }
-        .ptr-spin { animation: ptr-rotate 0.7s linear infinite; }
-        @keyframes ptr-rotate { to { transform: rotate(360deg); } }
+        .main-responsive-shell {
+          padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)) !important;
+        }
+        @media (min-width: 900px) {
+          .main-responsive-shell {
+            padding-bottom: 48px !important;
+          }
+        }
       `}</style>
 
       {/* Main content — padded bottom so nothing hides behind BottomNav */}
       <div
-        className="main"
+        className="main main-responsive-shell"
         id="main-content"
-        style={{ paddingBottom: "calc(100px + env(safe-area-inset-bottom, 0px))" }}
-
       >
         {/* Pull-to-refresh indicator — positioned at top, animated by touch events */}
         <div className="ptr-indicator" id="ptr-indicator-el" aria-hidden="true">
@@ -713,13 +740,7 @@ export default function App() {
         <InstallPrompt onInstall={installApp} onDismiss={dismissInstall} />
       )}
 
-      {/* Floating elements — only show login prompt on home tab */}
-      {activeTab === "home" && (
-        <FloatingLoginBtn
-          onLogin={() => setAuthModalOpen(true)}
-          onAccessCode={() => setAccessCodeOpen(true)}
-        />
-      )}
+
       <SidebarDrawer
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}

@@ -26,42 +26,57 @@ export default function CookieConsent() {
   };
 
   return (
-    <div
-      role="region"
-      aria-label="Cookie notice"
-      className="fade-in cookie-consent-bar"
-      style={{
-        position: "fixed",
-        left: "12px",
-        right: "12px",
-        bottom: "calc(80px + env(safe-area-inset-bottom, 0px))",
-        zIndex: 650,
-        maxWidth: "560px",
-        margin: "0 auto",
-        background: "var(--s1)",
-        border: "1px solid var(--b1)",
-        borderRadius: "14px",
-        boxShadow: "var(--shadow-lg, 0 12px 28px rgba(0,0,0,.4))",
-        padding: "14px 18px",
-        display: "flex",
-        flexDirection: "column",
-        gap: "10px",
-      }}
-    >
-      <p className="sm t2" style={{ lineHeight: 1.5, margin: 0 }}>
-        We use essential cookies to run AgroIntel (theme, language, sign-in) and,
-        if you translate the page, Google Translate's own cookie. We don't use
-        advertising or tracking cookies.{" "}
-        <Link to="/privacy" style={{ color: "var(--green)" }}>
-          Learn more
-        </Link>
-        .
-      </p>
-      <div style={{ display: "flex", justifyContent: "flex-end" }}>
-        <button className="btn btn-g btn-sm" onClick={accept}>
-          Got it
-        </button>
+    <>
+      <style>{`
+        .cookie-consent-bar {
+          position: fixed;
+          left: 12px;
+          right: 12px;
+          bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+          z-index: 650;
+          max-width: 520px;
+          margin: 0 auto;
+          background: var(--clay-surface, #141b18);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 16px;
+          box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          padding: 14px 18px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        @media (min-width: 900px) {
+          .cookie-consent-bar {
+            left: 28px;
+            right: auto;
+            bottom: 28px;
+            margin: 0;
+            max-width: 400px;
+          }
+        }
+      `}</style>
+      <div
+        role="region"
+        aria-label="Cookie notice"
+        className="fade-in cookie-consent-bar"
+      >
+        <p className="sm t2" style={{ lineHeight: 1.5, margin: 0 }}>
+          We use essential cookies to run AgroIntel (theme, language, sign-in) and,
+          if you translate the page, Google Translate's own cookie. We don't use
+          advertising or tracking cookies.{" "}
+          <Link to="/privacy" style={{ color: "var(--green)" }}>
+            Learn more
+          </Link>
+          .
+        </p>
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <button className="btn btn-g btn-sm" onClick={accept}>
+            Got it
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
