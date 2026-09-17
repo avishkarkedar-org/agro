@@ -10,6 +10,7 @@ from dependencies import (
 )
 import base64
 import httpx
+import re
 from fastapi.responses import StreamingResponse
 
 # AI_DEAD_DATE_R96: removed stale module-level date vars (computed at startup, never updated).
@@ -163,6 +164,8 @@ async def _text_completion(payload_base: dict, source: str, timeout: int = _TEXT
 
     if last_status == 429:
         raise HTTPException(429, "The AI is handling too many requests right now. Please wait a minute and try again.")
+    if last_status in (401, 403):
+        raise HTTPException(503, "AI API Key is invalid or suspended. Please update GROQ_API_KEY.")
     raise HTTPException(503, "AI service is busy. Please try again in a minute.")
 
 
@@ -265,6 +268,8 @@ async def _stream_text(payload_base: dict, source: str, request: Optional[Reques
 
     if last_status == 429:
         raise HTTPException(429, "The AI is handling too many requests right now. Please wait a minute and try again.")
+    if last_status in (401, 403):
+        raise HTTPException(503, "AI API Key is invalid or suspended. Please update GROQ_API_KEY.")
     raise HTTPException(503, "AI service is busy. Please try again in a minute.")
 
 
@@ -334,6 +339,8 @@ async def _vision_completion(prompt: str, mime: str, b64: str, headers: dict):
             429,
             "The AI vision scanner is experiencing high scan volume. Please wait a few seconds and try again."
         )
+    if last_status in (401, 403):
+        raise HTTPException(503, "AI API Key is invalid or suspended. Please update GROQ_API_KEY.")
     raise HTTPException(
         503,
         "Image analysis is temporarily unavailable because the AI service is busy. "

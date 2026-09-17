@@ -452,7 +452,7 @@ export default function App() {
 
 
   return (
-    <div style={{ minHeight: "100vh" }}>
+    <div style={{ minHeight: "100dvh" }}>
       <a href="#main-content" className="skip-link">Skip to main content</a>
       {maintenance && adminBypass && (
         <div
@@ -676,11 +676,11 @@ export default function App() {
           border-radius: 50%;
         }
         .main-responsive-shell {
-          padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)) !important;
+          padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important;
         }
         @media (min-width: 900px) {
           .main-responsive-shell {
-            padding-bottom: 48px !important;
+            padding-bottom: 32px !important;
           }
         }
       `}</style>

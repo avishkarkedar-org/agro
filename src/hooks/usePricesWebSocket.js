@@ -11,6 +11,7 @@ export function usePricesWebSocket() {
     let pingInterval;
     let backoff = 5000;
     let stopped = false;
+    let reconnectAttempts = 0;
 
     const connect = () => {
       if (stopped) return;
@@ -54,14 +55,15 @@ export function usePricesWebSocket() {
       ws.onclose = () => {
         setWsConnected(false);
         clearInterval(pingInterval);
-        if (!stopped) {
+        if (!stopped && reconnectAttempts < 5) {
           const jitter = Math.random() * 2000;
           reconnectTimeout = setTimeout(connect, Math.min(backoff + jitter, 60000));
           backoff = Math.min(backoff * 1.5, 60000);
+          reconnectAttempts++;
         }
       };
 
-      ws.onerror = () => {
+      ws.onerror = (err) => {
         // Handled silently by onclose
       };
     };
