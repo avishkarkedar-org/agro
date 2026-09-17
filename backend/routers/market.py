@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from typing import Optional
 from fastapi.responses import JSONResponse
 import cachetools
-from dependencies import supabase, rate_limit, api_cache_weather, api_cache_fert, DATAGOV_KEY
+from dependencies import supabase, rate_limit, api_cache_weather, api_cache_fert, DATAGOV_KEY, send_onesignal_price_alert
 
 logger = logging.getLogger("uvicorn.error")
 router = APIRouter()
@@ -515,6 +515,9 @@ def record_mandi_snapshot(result: dict):
                 rows, on_conflict="commodity,market,snapshot_date"
             ).execute()
             logger.info("mandi_history: stored " + str(len(rows)) + " snapshots for " + today)
+            for r in rows:
+                if r.get("commodity") and r.get("modal_price"):
+                    send_onesignal_price_alert(r["commodity"], r["modal_price"], r.get("market", ""))
     except Exception as e:
         logger.warning("record_mandi_snapshot failed: " + str(e))
 

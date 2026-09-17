@@ -21,6 +21,7 @@ import ScrollTopButton from "./components/ScrollTopButton";
 import CookieConsent from "./components/CookieConsent";
 import BottomNav from "./components/BottomNav";
 import DesktopNav from "./components/DesktopNav";
+import { initOneSignal } from "./utils/onesignal";
 
 
 // APP_SHELL_SPLIT_R117
@@ -139,6 +140,7 @@ export default function App() {
   };
 
   useEffect(() => {
+    initOneSignal();
     const handler = () => setIsLoggedIn(!!safeGetLS("agrointel_user"));
     window.addEventListener("agrointel-auth-change", handler);
     const openAuth = () => setAuthModalOpen(true);

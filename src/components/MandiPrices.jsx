@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import TTSButton from "./TTSButton";
+import { setDeviceMandiAlert, clearDeviceMandiAlert } from "../utils/onesignal";
 
 const PUNE_STATIC = [
   {
@@ -603,16 +604,15 @@ export default function MandiPrices() {
       const next = { ...prev };
       if (target && num > 0) {
         next[commodity] = num;
+        setDeviceMandiAlert(commodity, num);
         window.dispatchEvent(
           new CustomEvent("show-toast", {
             detail: `🔔 Alert set for ${commodity} ≥ ₹${num.toLocaleString("en-IN")}/q`,
           }),
         );
-        if (typeof Notification !== "undefined" && Notification.permission === "default") {
-          Notification.requestPermission();
-        }
       } else {
         delete next[commodity];
+        clearDeviceMandiAlert(commodity);
         window.dispatchEvent(
           new CustomEvent("show-toast", {
             detail: `Alert cleared for ${commodity}`,

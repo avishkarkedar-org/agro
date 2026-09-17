@@ -35,12 +35,17 @@ class Settings(BaseSettings):
     JWT_SECRET: str = ""
     DEFAULT_ADMIN_USER: str = "Avishkar"
     DEFAULT_ADMIN_PASS: str = ""
+    ONESIGNAL_APP_ID: str = ""
+    ONESIGNAL_REST_API_KEY: str = ""
 
     class Config:
         env_file = ".env"
         extra = "ignore"
 
 settings = Settings()
+
+ONESIGNAL_APP_ID = settings.ONESIGNAL_APP_ID or os.environ.get("ONESIGNAL_APP_ID", "").strip()
+ONESIGNAL_REST_API_KEY = settings.ONESIGNAL_REST_API_KEY or os.environ.get("ONESIGNAL_REST_API_KEY", "").strip()
 
 # ── Logging ──
 logger = logging.getLogger("agrointel")
@@ -630,18 +635,36 @@ def check_superadmin(request: Request, credentials: HTTPAuthorizationCredentials
         raise HTTPException(status_code=403, detail="Superadmin privileges required")
     return user
 
-def log_audit(admin_username: str, action: str, details: dict = None):
-    if not supabase: return
+def send_onesignal_price_alert(commodity: str, modal_price: float, market: str = ""):
+    """
+    Sends a targeted push notification via OneSignal ONLY to devices
+    that have tagged 'alert_{clean_commodity}' <= modal_price.
+    """
+    if not ONESIGNAL_APP_ID or not ONESIGNAL_REST_API_KEY:
+        return None
     try:
-        log_entry = {
-            "admin_username": admin_username,
-            "action": action,
-            "details": details or {},
-            "created_at": datetime.now(timezone.utc).isoformat()
+        clean_key = "alert_" + re.sub(r"[^a-z0-9]", "_", str(commodity).lower())[:30]
+        url = "https://onesignal.com/api/v1/notifications"
+        headers = {
+            "Authorization": f"Basic {ONESIGNAL_REST_API_KEY}",
+            "Content-Type": "application/json"
         }
-        supabase.table("audit_logs").insert(log_entry).execute()
+        payload = {
+            "app_id": ONESIGNAL_APP_ID,
+            "filters": [
+                {"field": "tag", "key": clean_key, "relation": "<=", "value": str(int(modal_price))}
+            ],
+            "headings": {"en": f"🌾 {commodity} Target Reached!"},
+            "contents": {"en": f"{commodity} at {market or 'Mandi'} reached ₹{int(modal_price):,}/q. Your target alert was triggered!"},
+            "url": "https://agro.avishkark.in/?tab=mandi"
+        }
+        with httpx.Client(timeout=6) as client:
+            resp = client.post(url, headers=headers, json=payload)
+            logger.info(f"OneSignal targeted push for {commodity} returned status {resp.status_code}")
+            return resp.status_code
     except Exception as e:
-        logger.error(f"Audit log error: {e}")
+        logger.warning(f"OneSignal targeted push error: {e}")
+        return None
 
 # ── Pydantic Models ──
 class PostCreate(BaseModel):
