@@ -463,7 +463,7 @@ async def scan(request: Request, file: UploadFile = File(...), lang: str = Form(
             if _s != -1 and _e >= _s:
                 text = text[_s:_e+1]
         result = json.loads(text)
-    except (KeyError, IndexError, json.JSONDecodeError) as e:
+    except (KeyError, IndexError, json.JSONDecodeError, TypeError, AttributeError) as e:
         logger.error(f"AI response parse error on {used_model} (finish_reason={_finish!r}): {e}")
         if _finish == "length":
             raise HTTPException(
