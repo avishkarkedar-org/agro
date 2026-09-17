@@ -70,7 +70,7 @@ const REFRESH_MS = 10 * 60 * 1000;
 const DEFAULT_LOCATION = { lat: 18.6462, lon: 73.7524, cityLabel: "Ravet, Pune (default)" };
 
 function currentLang() {
-  const v = safeGetLS("krishi_scan_lang");
+  const v = safeGetLS("agrointel_lang") || safeGetLS("krishi_scan_lang");
   return v === "hi" || v === "mr" ? v : "en";
 }
 
@@ -468,7 +468,7 @@ export default function Weather() {
               <TTSButton
                 text={
                   data.current
-                    ? `Current weather for ${city || "your location"}: ${Math.round(data.current.temperature_2m)} degrees Celsius, ${condLabel(effectiveCode(data.current.weathercode))}, humidity ${Math.round(data.current.relative_humidity_2m)} percent.`
+                    ? `Current weather for ${city || "your location"}: ${Math.round(data.current.temperature_2m)} degrees Celsius, ${condLabel(effectiveCode(data.current.weathercode, data.current.precipitation, data.current.temperature_2m), lang)}, humidity ${Math.round(data.current.relative_humidity_2m)} percent.`
                     : "Weather forecast loaded."
                 }
               />
@@ -482,7 +482,7 @@ export default function Weather() {
               </button>
               <a
                 href={`https://wa.me/?text=${encodeURIComponent(
-                  `🌦️ AgroIntel Weather Alert for ${city || "My Location"}:\n• Temperature: ${Math.round(data.current.temperature_2m)}°C (${condLabel(effectiveCode(data.current.weathercode))})\n• Humidity: ${Math.round(data.current.relative_humidity_2m)}%\n• Wind Speed: ${Math.round(data.current.wind_speed_10m || 0)} km/h\nShared via AgroIntel`
+                  `🌦️ AgroIntel Weather Alert for ${city || "My Location"}:\n• Temperature: ${Math.round(data.current.temperature_2m)}°C (${condLabel(effectiveCode(data.current.weathercode, data.current.precipitation, data.current.temperature_2m), lang)})\n• Humidity: ${Math.round(data.current.relative_humidity_2m)}%\n• Wind Speed: ${Math.round(data.current.wind_speed_10m || 0)} km/h\nShared via AgroIntel`
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -595,7 +595,7 @@ export default function Weather() {
             >
               <span
                 role="img"
-                aria-label={condLabel(Number(current.weathercode), lang)}
+                aria-label={condLabel(effectiveCode(Number(current.weathercode), current.precipitation, current.temperature_2m), lang)}
                 style={{ fontSize: "48px", lineHeight: 1 }}
               >
                 {smartIcon(
@@ -614,7 +614,7 @@ export default function Weather() {
                     color: "var(--ds-text-2, rgba(238,242,239,0.74))",
                   }}
                 >
-                  {condLabel(Number(current.weathercode), lang) +
+                  {condLabel(effectiveCode(Number(current.weathercode), current.precipitation, current.temperature_2m), lang) +
                     "  " +
                     ARROW +
                     "  feels like " +

@@ -574,6 +574,7 @@ class CropDoctorRequest(BaseModel):
     disease: str = ""
     severity: str = ""
     stream: bool = False
+    lang: Optional[str] = "en"
 
 @router.post("/api/crop-doctor")
 async def crop_doctor(req: CropDoctorRequest, request: Request):
@@ -583,7 +584,17 @@ async def crop_doctor(req: CropDoctorRequest, request: Request):
     prompt = f"""You are an expert Indian agricultural scientist. A farmer scanned their {req.crop} plant and the AI detected: {req.disease} (Severity: {req.severity}).
 The farmer asks: \"{req.question}\"
 Give a concise, practical answer in 2-3 sentences. Use simple language. Mention specific product names/doses if relevant."""
-    
+
+    lang_map = {
+        'en': 'English', 'hi': 'Hindi', 'mr': 'Marathi', 'te': 'Telugu',
+        'ta': 'Tamil', 'bn': 'Bengali', 'gu': 'Gujarati', 'kn': 'Kannada',
+        'ml': 'Malayalam', 'pa': 'Punjabi',
+        'en-in': 'English', 'hi-in': 'Hindi', 'mr-in': 'Marathi'
+    }
+    user_lang = lang_map.get((req.lang or "en").lower().strip(), "English")
+    if user_lang != "English":
+        prompt += f"\n\nMANDATORY LANGUAGE RULE: You MUST answer strictly in {user_lang.upper()} using the {user_lang} (Devanagari) script. Do not reply in English."
+
     # TEXT_FALLBACK_R109: no "model" key here - _text_completion/_stream_text set
     # it per candidate as they walk TEXT_MODELS.
     payload = {"messages": [{"role": "user", "content": prompt}], "max_tokens": 400, "temperature": 0.3}
@@ -699,15 +710,18 @@ async def chat_endpoint(req: ChatRequest, request: Request, response: Response):
         system_prompt += " STRICT INSTRUCTION: Refuse to answer any non-farming/agriculture queries politely. "
         
     lang_map = {
+        'en': 'English', 'hi': 'Hindi', 'mr': 'Marathi',
         'en-in': 'English', 'hi-in': 'Hindi', 'mr-in': 'Marathi',
         'gu-in': 'Gujarati', 'ta-in': 'Tamil', 'te-in': 'Telugu',
         'bn-in': 'Bengali', 'pa-in': 'Punjabi', 'kn-in': 'Kannada',
-        'ml-in': 'Malayalam'
+        'ml-in': 'Malayalam', 'gu': 'Gujarati', 'ta': 'Tamil',
+        'te': 'Telugu', 'bn': 'Bengali', 'pa': 'Punjabi', 'kn': 'Kannada',
+        'ml': 'Malayalam'
     }
     if req.lang:
-        full_lang = lang_map.get(req.lang.lower(), "English")
+        full_lang = lang_map.get(req.lang.lower().strip(), "English")
         if full_lang != "English":
-            system_prompt += f" MANDATORY LANGUAGE RULE: You MUST speak strictly in {full_lang.upper()} using the {full_lang} script. Do not reply in English."
+            system_prompt += f" MANDATORY LANGUAGE RULE: The active conversation language is {full_lang.upper()}. You MUST reply strictly and 100% in {full_lang.upper()} using the {full_lang} (Devanagari) script. Do NOT reply in English."
         else:
             system_prompt += f" MANDATORY LANGUAGE RULE: You MUST speak strictly in ENGLISH. Do NOT reply in Hindi, Marathi, or any other language."
 

@@ -115,7 +115,7 @@ function LiveEncyclopedia() {
       const utterance = new SpeechSynthesisUtterance(text);
       const activeLang = safeGetLS("agrointel_lang") || "en";
       utterance.lang =
-        activeLang === "hi" || activeLang === "mr" ? "hi-IN" : "en-IN";
+        activeLang === "mr" ? "mr-IN" : activeLang === "hi" ? "hi-IN" : "en-IN";
       utterance.onend = () => setIsPlaying(false);
       utterance.onerror = () => setIsPlaying(false);
       window.speechSynthesis.speak(utterance);

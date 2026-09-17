@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Mic, Send } from "lucide-react";
 import { useSettings, API } from "../context/SettingsContext";
+import { safeGetLS, safeSetLS } from "../utils/helpers";
 
 const LANGS = [
   { code: "en-IN", label: "English", native: "English" },
@@ -77,10 +78,16 @@ export default function AIVoiceAssistant() {
   const [transcript, setTranscript] = useState("");
   const [inputText, setInputText] = useState("");
   const [error, setError] = useState("");
-  const [messages, setMessages] = useState([]);
-  const [lang, setLang] = useState(
-    () => (typeof window !== "undefined" && localStorage.getItem("ks_voice_lang")) || "en-IN"
-  );
+  const getInitialLang = () => {
+    const savedVoice = safeGetLS("ks_voice_lang");
+    if (savedVoice) return savedVoice;
+    const appLang = safeGetLS("agrointel_lang") || safeGetLS("krishi_scan_lang");
+    if (appLang === "hi") return "hi-IN";
+    if (appLang === "mr") return "mr-IN";
+    return "en-IN";
+  };
+
+  const [lang, setLang] = useState(getInitialLang);
 
   const t = T[lang] || T["en-IN"];
   const whoClass = lang === "en-IN" ? "ksv-msg-who" : "ksv-msg-who ksv-msg-who-deva";
@@ -104,8 +111,22 @@ export default function AIVoiceAssistant() {
   }, [messages, isThinking]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") localStorage.setItem("ks_voice_lang", lang);
+    safeSetLS("ks_voice_lang", lang);
+    const short = lang.split("-")[0];
+    safeSetLS("agrointel_lang", short);
+    safeSetLS("krishi_scan_lang", short);
   }, [lang]);
+
+  useEffect(() => {
+    const onLangChange = (e) => {
+      const newLang = e.detail;
+      if (newLang === "hi") setLang("hi-IN");
+      else if (newLang === "mr") setLang("mr-IN");
+      else setLang("en-IN");
+    };
+    window.addEventListener("agrointel-lang-change", onLangChange);
+    return () => window.removeEventListener("agrointel-lang-change", onLangChange);
+  }, []);
 
   // Load and cache browser voices
   useEffect(() => {
@@ -470,6 +491,11 @@ export default function AIVoiceAssistant() {
         return;
       }
     }
+    const currentAppLang = safeGetLS("agrointel_lang") || safeGetLS("krishi_scan_lang");
+    if (currentAppLang === "hi" && lang !== "hi-IN") setLang("hi-IN");
+    else if (currentAppLang === "mr" && lang !== "mr-IN") setLang("mr-IN");
+    else if (currentAppLang === "en" && lang !== "en-IN") setLang("en-IN");
+
     setIsOpen(true);
     setError("");
     if (!supported) {

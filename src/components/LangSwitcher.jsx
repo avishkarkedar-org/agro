@@ -26,43 +26,47 @@ export default function LangSwitcher() {
     setActive(langCode);
     setOpen(false);
     safeSetLS("agrointel_lang", langCode);
+    safeSetLS("krishi_scan_lang", langCode);
+    safeSetLS("ks_voice_lang", langCode === "hi" ? "hi-IN" : langCode === "mr" ? "mr-IN" : "en-IN");
+
+    // Broadcast language change to active components
+    window.dispatchEvent(new CustomEvent("agrointel-lang-change", { detail: langCode }));
 
     const host = window.location.hostname;
-    const parts = host.split(".");
-    const domains = [];
-    if (parts.length === 1 || /^\d+\.\d+\.\d+\.\d+$/.test(host)) {
-      domains.push(host);
+    if (langCode === "en") {
+      document.cookie = "googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+      if (host && host !== "localhost") {
+        document.cookie = `googtrans=; path=/; domain=${host}; expires=Thu, 01 Jan 1970 00:00:00 UTC`;
+      }
     } else {
-      for (let i = 0; i < parts.length - 1; i++) {
-        const d = parts.slice(i).join(".");
-        domains.push(d);
-        domains.push(`.${d}`);
+      document.cookie = `googtrans=/en/${langCode}; path=/`;
+      if (host && host !== "localhost") {
+        document.cookie = `googtrans=/en/${langCode}; path=/; domain=${host}`;
       }
     }
 
-    if (langCode === "en") {
-      domains.forEach((d) => {
-        document.cookie = `googtrans=; path=/; domain=${d}; expires=Thu, 01 Jan 1970 00:00:00 UTC`;
-      });
-      // eslint-disable-next-line react-hooks/immutability
-      document.cookie =
-        "googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC";
-    } else {
-      domains.forEach((d) => {
-        document.cookie = `googtrans=/en/${langCode}; path=/; domain=${d}`;
-      });
-      // eslint-disable-next-line react-hooks/immutability
-      document.cookie = `googtrans=/en/${langCode}; path=/`;
+    // If Google Translate combo already exists, trigger it immediately
+    const combo = document.querySelector(".goog-te-combo");
+    if (combo) {
+      combo.value = langCode;
+      combo.dispatchEvent(new Event("change"));
     }
 
-    // Force a hard reload to ensure Google Translate script reads the new cookie
+    // Reload to ensure DOM and scripts apply language switch cleanly
     window.location.reload();
   }
 
   useEffect(() => {
     const saved = safeGetLS("agrointel_lang", "en");
 
-    // Sync the cookie state on load with whatever is in localStorage
+    // Sync other language keys if missing
+    if (saved && !safeGetLS("krishi_scan_lang")) {
+      safeSetLS("krishi_scan_lang", saved);
+    }
+    if (saved && !safeGetLS("ks_voice_lang")) {
+      safeSetLS("ks_voice_lang", saved === "hi" ? "hi-IN" : saved === "mr" ? "mr-IN" : "en-IN");
+    }
+
     const getCookie = (name) => {
       const value = `; ${document.cookie}`;
       const parts = value.split(`; ${name}=`);
@@ -73,40 +77,9 @@ export default function LangSwitcher() {
     const expectedCookie = saved === "en" ? "" : `/en/${saved}`;
 
     if (saved && saved !== "en" && currentCookie !== expectedCookie) {
-      const host = window.location.hostname;
-      const parts = host.split(".");
-      const domains = [];
-      if (parts.length === 1 || /^\d+\.\d+\.\d+\.\d+$/.test(host)) {
-        domains.push(host);
-      } else {
-        for (let i = 0; i < parts.length - 1; i++) {
-          const d = parts.slice(i).join(".");
-          domains.push(d);
-          domains.push(`.${d}`);
-        }
-      }
-      domains.forEach((d) => {
-        document.cookie = `googtrans=/en/${saved}; path=/; domain=${d}`;
-      });
       document.cookie = `googtrans=/en/${saved}; path=/`;
     } else if (saved === "en" && currentCookie) {
-      const host = window.location.hostname;
-      const parts = host.split(".");
-      const domains = [];
-      if (parts.length === 1 || /^\d+\.\d+\.\d+\.\d+$/.test(host)) {
-        domains.push(host);
-      } else {
-        for (let i = 0; i < parts.length - 1; i++) {
-          const d = parts.slice(i).join(".");
-          domains.push(d);
-          domains.push(`.${d}`);
-        }
-      }
-      domains.forEach((d) => {
-        document.cookie = `googtrans=; path=/; domain=${d}; expires=Thu, 01 Jan 1970 00:00:00 UTC`;
-      });
-      document.cookie =
-        "googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+      document.cookie = "googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC";
     }
 
     if (saved && saved !== "en") {
@@ -121,7 +94,7 @@ export default function LangSwitcher() {
           setTimeout(trySwitch, 500);
         }
       };
-      setTimeout(trySwitch, 1000);
+      setTimeout(trySwitch, 800);
     }
   }, []);
 

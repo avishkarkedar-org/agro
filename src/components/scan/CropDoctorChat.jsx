@@ -8,6 +8,7 @@
 
 import { useState } from "react";
 import { API } from "../../context/SettingsContext";
+import { safeGetLS } from "../../utils/helpers";
 
 const MAX_QUESTIONS = 3;
 
@@ -24,6 +25,7 @@ export default function CropDoctorChat({ crop, disease, severity }) {
     setMessages((prev) => [...prev, { role: "user", text: q }]);
     setLoading(true);
     try {
+      const userLang = safeGetLS("krishi_scan_lang") || safeGetLS("agrointel_lang") || "en";
       const r = await fetch(`${API}/api/crop-doctor`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -32,6 +34,7 @@ export default function CropDoctorChat({ crop, disease, severity }) {
           crop,
           disease,
           severity,
+          lang: userLang,
           stream: true,
         }),
       });
