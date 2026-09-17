@@ -45,7 +45,6 @@ import HourlyRain from "./weather/HourlyRain";
 import SoilMoisture from "./weather/SoilMoisture";
 import CropHealthIndex from "./weather/CropHealthIndex";
 import SprayWindow from "./weather/SprayWindow";
-import FuelPrices from "./weather/FuelPrices";
 import {
   smartIcon,
   effectiveCode,
@@ -107,8 +106,6 @@ export default function Weather() {
   // not a location the user granted or chose. Drives the warning banner.
   const [usingDefault, setUsingDefault] = useState(false);
   const [selDay, setSelDay] = useState(0);
-  const [fuel, setFuel] = useState(null);
-  const [fuelLoading, setFuelLoading] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [updatedAt, setUpdatedAt] = useState(null);
   const [offline, setOffline] = useState(
@@ -122,9 +119,6 @@ export default function Weather() {
   const lang = currentLang();
   const reportRef = useFocusTrap(showReport, () => setShowReport(false));
 
-  // var() is not valid in an SVG presentation attribute, so recharts cannot be
-  // handed "var(--ds-danger)". Resolve the tokens to real values instead of
-  // hardcoding #ef4444 / #3b82f6 (audit item 2).
   useEffect(() => {
     try {
       const cs = getComputedStyle(document.documentElement);
@@ -146,24 +140,6 @@ export default function Weather() {
       window.removeEventListener("online", on);
       window.removeEventListener("offline", off);
     };
-  }, []);
-
-  const fetchFuel = useCallback(async (cityName) => {
-    if (!cityName) return;
-    const clean = String(cityName).split(",")[0].trim();
-    if (!clean) return;
-    setFuelLoading(true);
-    try {
-      const r = await fetch(
-        API + "/api/fuel?city=" + encodeURIComponent(clean),
-      );
-      if (!r.ok) throw new Error("fuel " + r.status);
-      setFuel(await r.json());
-    } catch (e) {
-      setFuel(null);
-    } finally {
-      setFuelLoading(false);
-    }
   }, []);
 
   const load = useCallback(async (lat, lon) => {
@@ -264,8 +240,7 @@ export default function Weather() {
     setCoords({ lat: DEFAULT_LOCATION.lat, lon: DEFAULT_LOCATION.lon });
     setCity(DEFAULT_LOCATION.cityLabel);
     load(DEFAULT_LOCATION.lat, DEFAULT_LOCATION.lon);
-    fetchFuel("Pune");
-  }, [load, fetchFuel]);
+  }, [load]);
 
   const requestLocation = useCallback(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
@@ -297,7 +272,6 @@ export default function Weather() {
               setCity(
                 [name, j.principalSubdivision].filter(Boolean).join(", "),
               );
-              fetchFuel(name);
             }
           }
         } catch (e) {
@@ -310,7 +284,7 @@ export default function Weather() {
       },
       { timeout: 8000 },
     );
-  }, [load, fetchFuel, loadDefaultLocation]);
+  }, [load, loadDefaultLocation]);
 
   // Ask once on mount. A refusal or an unsupported device now loads the
   // clearly labeled Ravet, Pune default (R157) instead of nothing.
@@ -346,13 +320,12 @@ export default function Weather() {
         setGps("ok");
         setUsingDefault(false);
         load(hit.latitude, hit.longitude);
-        fetchFuel(hit.name);
       } catch (e) {
         setLoading(false);
         setErr("Could not look up that place. Check your connection.");
       }
     },
-    [load, fetchFuel],
+    [load],
   );
 
   // Auto-refresh: the card used to load once and sit there all day (item 11).
@@ -833,8 +806,8 @@ export default function Weather() {
                 <div style={eyebrowStyle("neutral")}>
                   Temperature trend - next 7 days
                 </div>
-                <div style={{ width: "100%", height: "170px" }}>
-                  <ResponsiveContainer width="100%" height="100%">
+                <div style={{ width: "100%", height: 170 }}>
+                  <ResponsiveContainer width="100%" height={170} minWidth={0} minHeight={170} debounce={50}>
                     <LineChart data={chartData}>
                       <XAxis
                         dataKey="day"
@@ -883,7 +856,6 @@ export default function Weather() {
             <SprayWindow daily={daily} lang={lang} />
             <SoilMoisture soil={data._soilMoisture} />
             <CropHealthIndex current={current} daily={daily} />
-            <FuelPrices fuel={fuel} loading={fuelLoading} />
 
             {updatedAt && (
               <p style={{ ...captionStyle, marginTop: "10px" }}>

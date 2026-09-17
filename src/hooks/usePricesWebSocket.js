@@ -4,35 +4,35 @@ import { API } from "../context/SettingsContext";
 
 export function usePricesWebSocket() {
   const setWsConnected = useStore((state) => state.setWsConnected);
-  const setLiveMandiPrices = useStore((state) => state.setLiveMandiPrices);
-  const setLiveFuelPrices = useStore((state) => state.setLiveFuelPrices);
 
   useEffect(() => {
     let ws;
     let reconnectTimeout;
     let pingInterval;
-    let backoff = 2000;
+    let backoff = 5000;
+    let stopped = false;
 
     const connect = () => {
+      if (stopped) return;
       // Convert http/https API URL to ws/wss
       const wsUrl = API.replace(/^http/, "ws") + "/ws/prices";
       try {
         ws = new WebSocket(wsUrl);
       } catch (e) {
         reconnectTimeout = setTimeout(connect, backoff);
-        backoff = Math.min(backoff * 1.5, 30000);
+        backoff = Math.min(backoff * 1.5, 60000);
         return;
       }
 
       ws.onopen = () => {
         setWsConnected(true);
-        backoff = 2000;
+        backoff = 5000;
         clearInterval(pingInterval);
         pingInterval = setInterval(() => {
           if (ws && ws.readyState === WebSocket.OPEN) {
             try { ws.send("ping"); } catch (_) {}
           }
-        }, 30000);
+        }, 45000);
       };
 
       ws.onmessage = (event) => {
@@ -40,8 +40,6 @@ export function usePricesWebSocket() {
           if (event.data === "pong" || event.data === "ping") return;
           const data = JSON.parse(event.data);
           if (data.type === "prices_updated") {
-            // Background tasks updated the backend cache.
-            // Dispatch a custom event so Mandi/Fuel components can trigger a background refresh
             window.dispatchEvent(
               new CustomEvent("agrointel-live-prices-updated", {
                 detail: data,
@@ -56,24 +54,27 @@ export function usePricesWebSocket() {
       ws.onclose = () => {
         setWsConnected(false);
         clearInterval(pingInterval);
-        const jitter = Math.random() * 1000;
-        reconnectTimeout = setTimeout(connect, Math.min(backoff + jitter, 30000));
-        backoff = Math.min(backoff * 1.5, 30000);
+        if (!stopped) {
+          const jitter = Math.random() * 2000;
+          reconnectTimeout = setTimeout(connect, Math.min(backoff + jitter, 60000));
+          backoff = Math.min(backoff * 1.5, 60000);
+        }
       };
 
-      ws.onerror = (err) => {
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.close();
-        }
+      ws.onerror = () => {
+        // Handled silently by onclose
       };
     };
 
     connect();
 
     return () => {
+      stopped = true;
       clearTimeout(reconnectTimeout);
       clearInterval(pingInterval);
-      if (ws) ws.close();
+      if (ws) {
+        try { ws.close(); } catch (_) {}
+      }
     };
   }, [setWsConnected]);
 }

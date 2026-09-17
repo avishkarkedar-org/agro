@@ -305,7 +305,7 @@ export default function YieldCalc() {
                   </span>
                 </div>
                 <div style={{ width: "100%", height: 180, marginBottom: "12px" }}>
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height={180} minWidth={0} minHeight={180} debounce={50}>
                     <BarChart
                       data={[
                         { name: "Cost", value: Math.round(res.cost) },

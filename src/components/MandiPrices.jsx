@@ -268,7 +268,7 @@ function MiniChart({ data, color, commodity }) {
         </div>
       </div>
       <div style={{ width: "100%", height: 100, minHeight: 100 }}>
-        <ResponsiveContainer width="100%" height={100} minWidth={100} minHeight={100}>
+        <ResponsiveContainer width="100%" height={100} minWidth={0} minHeight={100} debounce={50}>
           <LineChart data={data}>
             <XAxis
               dataKey="label"

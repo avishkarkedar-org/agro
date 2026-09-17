@@ -185,7 +185,6 @@ AgroIntel maintains complete ethical transparency regarding real-time vs. calcul
 | Data Point | Data Status | Source & Technical Methodology | Fallback Strategy |
 |---|---|---|---|
 | **Weather & Soil Moisture** | 🟢 **Live Telemetry** | Open-Meteo GFS & ECMWF High-Resolution Agro API (0-28 cm soil depth, wind, rain probability) | Fixed Pune regional Agro climatic default |
-| **Fuel Prices (Diesel/Petrol)** | 🟢 **Live Web Scraper** | Scraped hourly via HTTPX & BeautifulSoup from GoodReturns for all 28 Indian states | Cached state averages |
 | **Agri News & Schemes** | 🟢 **Live RSS Feed** | Scraped from The Hindu BusinessLine Agri & Press Information Bureau (PIB) RSS | Cached statutory news alerts |
 | **APMC Mandi Rates & Trends** | 🟢 **Live / Cache Series** | Scraped from Agmarknet & APMC Pune with continuous 7-day historical interpolation | 7-day continuous simulated series |
 | **Fertilizer Statutory MRPs** | 🟡 **Statutory Live** | Official Dept. of Fertilizers Gazette Notifications (Urea ₹266.50/bag, DAP ₹1,350/bag, MOP ₹1,700/bag) | Fixed statutory MRP database |
@@ -202,7 +201,6 @@ AgroIntel maintains complete ethical transparency regarding real-time vs. calcul
 |---|---|---|---|
 | `GET` | `/health` | System heartbeat, uptime & server timestamp | Live (No-cache) |
 | `GET` | `/api/weather` | 15-day agro-meteorology, soil moisture & spray windows | 15 min TTL cache |
-| `GET` | `/api/fuel` | State-wise live diesel & petrol rates | 1 hour TTL cache |
 | `GET` | `/api/mandi` | Live APMC mandi rates across staple commodities | 10 min TTL cache |
 | `GET` | `/api/mandi/history` | 7-day continuous historical price series | 10 min TTL cache |
 | `GET` | `/api/news` | Real-time Indian agriculture news headlines | 30 min TTL cache |
