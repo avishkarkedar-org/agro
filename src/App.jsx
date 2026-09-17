@@ -452,7 +452,7 @@ export default function App() {
 
 
   return (
-    <div style={{ minHeight: "100dvh" }}>
+    <div style={{ minHeight: "100vh" }}>
       <a href="#main-content" className="skip-link">Skip to main content</a>
       {maintenance && adminBypass && (
         <div
