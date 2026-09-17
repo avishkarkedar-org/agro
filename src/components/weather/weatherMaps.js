@@ -8,20 +8,20 @@
 // Every icon is paired with a text label so it can carry an accessible name;
 // the 52px current-conditions glyph previously had none (audit item 32).
 
-const SUN = "\u2600\uFE0F";
-const SUN_SMALL_CLOUD = "\uD83C\uDF24\uFE0F";
-const SUN_CLOUD = "\u26C5";
-const CLOUD_SUN = "\uD83C\uDF25\uFE0F";
-const CLOUD = "\u2601\uFE0F";
-const FOG = "\uD83C\uDF2B\uFE0F";
-const DRIZZLE = "\uD83C\uDF26\uFE0F";
-const RAIN = "\uD83C\uDF27\uFE0F";
-const SLEET = "\uD83C\uDF28\uFE0F";
-const SNOW = "\u2744\uFE0F";
-const STORM = "\u26C8\uFE0F";
-const THERMO = "\uD83C\uDF21\uFE0F";
-const MOON = "\uD83C\uDF19";
-const NIGHT_CLOUD = "\uD83C\uDF11";
+const SUN = "☀️";
+const SUN_SMALL_CLOUD = "🌤️";
+const SUN_CLOUD = "⛅";
+const CLOUD_SUN = "🌥️";
+const CLOUD = "☁️";
+const FOG = "🌫️";
+const DRIZZLE = "🌦️";
+const RAIN = "🌧️";
+const SLEET = "🌨️";
+const SNOW = "❄️";
+const STORM = "⛈️";
+const THERMO = "🌡️";
+const MOON = "🌙";
+const NIGHT_CLOUD = "☁️";
 
 export const WI = {
   0: SUN,
@@ -54,27 +54,27 @@ export const WI = {
   99: STORM,
 };
 
-// Open-Meteo reports a precipitation *code* even when precipitation is 0mm,
-// which showed rain icons on dry days. Preserved from the original.
+// Open-Meteo reports a precipitation *code* even when precipitation is under 0.8mm (trace).
+// This filters out false rain icons on dry/sunny days.
 export function smartIcon(code, isDay, precip) {
   const p = Number(precip) || 0;
   const day = isDay !== 0;
-  if (p === 0) {
-    if (code >= 51 && code <= 67) return day ? SUN_SMALL_CLOUD : CLOUD;
+  if (p < 0.8) {
+    if (code >= 51 && code <= 67) return day ? SUN_CLOUD : CLOUD;
     if (code >= 80 && code <= 82) return day ? SUN_CLOUD : CLOUD;
     if (code >= 95 && code <= 99) return day ? SUN_CLOUD : CLOUD;
-    if (code === 3) return day ? SUN_CLOUD : CLOUD;
+    if (code === 3) return CLOUD;
     if (code === 2) return day ? SUN_CLOUD : CLOUD_SUN;
     if (code === 1) return day ? SUN_SMALL_CLOUD : NIGHT_CLOUD;
     if (code === 0) return day ? SUN : MOON;
   }
-  return WI[code] || THERMO;
+  return WI[code] || (day ? SUN : MOON);
 }
 
-// Same dry-code correction, but returns the code so callers can label it.
+// Dry-code correction: returns the appropriate clear/cloudy code if rainfall < 0.8mm.
 export function effectiveCode(code, rainMm, maxTemp) {
   const r = Number(rainMm) || 0;
-  if (r < 3 && code >= 51) return Number(maxTemp) > 35 ? 1 : 2;
+  if (r < 0.8 && code >= 51) return Number(maxTemp) > 30 ? 1 : 2;
   return code;
 }
 
