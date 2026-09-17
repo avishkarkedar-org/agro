@@ -1,0 +1,105 @@
+name: AgroIntel CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+# A new push to the same ref makes older in-flight runs pointless.
+# Cancel them instead of letting them queue and burn minutes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least privilege: nothing in this pipeline writes back to the repo.
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------
+  # Fast static guard. Runs in ~10s and gates the expensive jobs.
+  #
+  # Why this exists: lucide-react v1 removed ALL brand/logo icons.
+  # Importing one is a hard rolldown MISSING_EXPORT failure, but it
+  # only surfaces at bundle time -- the dev server resolves imports
+  # lazily, so it sails through local testing and breaks prod.
+  # This caught-in-CI check is cheaper than another red main.
+  # ---------------------------------------------------------------
+  guard:
+    name: Guard / banned imports
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - uses: actions/checkout@v4
+    - name: Block lucide-react brand icon imports
+      run: |
+        BRANDS='Instagram|Twitter|Facebook|Youtube|Github|Linkedin|Slack|Figma|Chrome|Codepen|Dribbble|Gitlab|Twitch|Trello|Airplay'
+        if grep -rnE "from [\"']lucide-react[\"']" src admin-panel/src | grep -E "\b(${BRANDS})\b"; then
+          echo "::error::lucide-react v1 removed all brand/logo icons. The import above will fail the production bundle with MISSING_EXPORT. Draw the glyph inline as a local SVG component instead -- see InstagramIcon in src/App.jsx."
+          exit 1
+        fi
+        echo "OK: no banned brand-icon imports found."
+
+  build-farmer-app:
+    needs: guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version-file: '.nvmrc'
+        cache: 'npm'
+        cache-dependency-path: package-lock.json
+    - name: Install dependencies
+      run: npm ci
+    - name: Build farmer app (fails on broken JSX)
+      run: npm run build
+    - name: Lint
+      run: npx eslint src || echo "Lint non-fatal"
+
+  build-admin-panel:
+    needs: guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ./admin-panel
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version-file: '.nvmrc'
+        cache: 'npm'
+        cache-dependency-path: admin-panel/package-lock.json
+    - name: Install dependencies
+      run: npm ci
+    - name: Build admin panel
+      run: npm run build
+    - name: Lint
+      run: npm run lint || echo "Lint non-fatal"
+
+  test-backend:
+    needs: guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11.12'
+        cache: 'pip'
+        cache-dependency-path: backend/requirements.txt
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements.txt
+    - name: Backend import check
+      run: python -c "import main; print('Backend loaded successfully')"
