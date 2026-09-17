@@ -151,7 +151,7 @@ export default function Weather() {
         lat +
         "&longitude=" +
         lon +
-        "&timezone=auto&forecast_days=15&models=gfs_seamless";
+        "&timezone=auto&forecast_days=15";
       const main =
         base +
         "&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weathercode,apparent_temperature,uv_index,precipitation,is_day,cloud_cover" +

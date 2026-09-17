@@ -598,10 +598,27 @@ export default function MandiPrices() {
   };
 
   const setAlert = (commodity, target) => {
+    const num = Number(target);
     setAlerts((prev) => {
       const next = { ...prev };
-      if (target && Number(target) > 0) next[commodity] = Number(target);
-      else delete next[commodity];
+      if (target && num > 0) {
+        next[commodity] = num;
+        window.dispatchEvent(
+          new CustomEvent("show-toast", {
+            detail: `🔔 Alert set for ${commodity} ≥ ₹${num.toLocaleString("en-IN")}/q`,
+          }),
+        );
+        if (typeof Notification !== "undefined" && Notification.permission === "default") {
+          Notification.requestPermission();
+        }
+      } else {
+        delete next[commodity];
+        window.dispatchEvent(
+          new CustomEvent("show-toast", {
+            detail: `Alert cleared for ${commodity}`,
+          }),
+        );
+      }
       try {
         localStorage.setItem("krishi_mandi_alerts", JSON.stringify(next));
       } catch {}
@@ -631,6 +648,7 @@ export default function MandiPrices() {
   );
 
   const PriceRow = ({ p, idx }) => {
+    const [targetInput, setTargetInput] = useState(alerts[p.commodity] ? String(alerts[p.commodity]) : "");
     const col = priceCol(p.min_price, p.max_price);
     const rowKey = `${p.commodity}_${p.market || ""}_${p.variety || ""}`;
     const isOpen = expanded === rowKey;
@@ -873,30 +891,43 @@ export default function MandiPrices() {
                 </p>
               </div>
             )}
-            <div className="flex gap2 aic mt2">
-              <span className="mono t3 xs">Alert ≥ ₹</span>
+            <div className="flex gap2 aic mt2" onClick={(e) => e.stopPropagation()}>
+              <span className="mono t3 xs" style={{ whiteSpace: "nowrap" }}>Target Alert ≥ ₹</span>
               <input
                 className="input"
                 type="number"
                 inputMode="numeric"
                 aria-label={`Set price alert for ${p.commodity}`}
-                placeholder={
-                  alerts[p.commodity] ? String(alerts[p.commodity]) : "target"
-                }
-                defaultValue={alerts[p.commodity] || ""}
-                onClick={(e) => e.stopPropagation()}
+                placeholder="e.g. 3000"
+                value={targetInput}
+                onChange={(e) => setTargetInput(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.stopPropagation();
-                    setAlert(p.commodity, e.target.value);
+                    setAlert(p.commodity, targetInput);
                   }
                 }}
+                style={{ padding: "6px 10px", fontSize: "12px", height: "34px", maxWidth: "120px" }}
               />
+              <button
+                type="button"
+                className="btn btn-g btn-sm"
+                style={{ padding: "6px 12px", fontSize: "12px", height: "34px" }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setAlert(p.commodity, targetInput);
+                }}
+              >
+                Set
+              </button>
               {alerts[p.commodity] && (
                 <button
+                  type="button"
                   className="btn btn-o btn-sm"
+                  style={{ padding: "6px 10px", fontSize: "12px", height: "34px" }}
                   onClick={(e) => {
                     e.stopPropagation();
+                    setTargetInput("");
                     setAlert(p.commodity, 0);
                   }}
                 >
